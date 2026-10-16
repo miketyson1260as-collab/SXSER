@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="amoled">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="NEXUS — a Discord-inspired community chat interface. Single-file, local-demo prototype (no backend).">
+<meta name="theme-color" content="#000000">
+<title>NEXUS — Community Chat (Local Demo)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M18 46V18l28 28V18' fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* ============ THEME TOKENS ============ */
+:root{--font:15px;--acc:#8b5cf6;--acc2:#3b82f6;--grad:linear-gradient(135deg,#8b5cf6,#3b82f6);
+--bg:#000;--bg1:#07070c;--bg2:#0b0b12;--bg3:#14141d;--bg4:#1e1e2a;--line:#22222f;--tx:#ececf6;--tx2:#a2a2ba;--tx3:#6c6c86;
+--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--shadow:0 12px 44px rgba(0,0,0,.65);--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+[data-theme=dark]{--bg:#0f0f17;--bg1:#151520;--bg2:#1a1a27;--bg3:#222232;--bg4:#2b2b3f;--line:#2e2e45;--tx:#ececf8;--tx2:#a9a9c4;--tx3:#74748f}
+[data-theme=light]{--bg:#e9e9f4;--bg1:#fbfbff;--bg2:#ffffff;--bg3:#f0f0f9;--bg4:#e3e3f1;--line:#dadaea;--tx:#16162a;--tx2:#50506b;--tx3:#8686a0;--shadow:0 12px 44px rgba(40,40,90,.2)}
+*{box-sizing:border-box;margin:0}
+html{font-size:var(--font);-webkit-text-size-adjust:100%}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);height:100dvh;overflow:hidden;line-height:1.45}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+a{color:var(--acc2)}
+.ic{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-.2em}
+.grow{flex:1}
+/* ============ BASE COMPONENTS ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.55rem 1rem;border-radius:.7rem;background:var(--bg4);border:1px solid var(--line);font-weight:600;transition:.15s;min-height:2.4rem}
+.btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn.primary{background:var(--grad);border:0;color:#fff}
+.btn.danger{background:var(--err);border:0;color:#fff}
+.btn.ghost{background:transparent}
+.btn.sm{padding:.3rem .7rem;min-height:2rem;font-size:.9rem}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.6;pointer-events:none}
+.btn.busy::after{content:"";width:1em;height:1em;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.icon-btn{display:inline-grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:.7rem;color:var(--tx2);transition:.15s;position:relative;flex:none}
+.icon-btn:hover{background:var(--bg4);color:var(--tx)}
+.icon-btn.on{color:var(--acc);background:var(--bg3)}
+.chip{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .65rem;border-radius:2rem;background:var(--bg3);border:1px solid var(--line);font-size:.8rem;color:var(--tx2)}
+.chip:hover,.chip.on{color:var(--tx);border-color:var(--acc)}
+.tag{font-size:.62rem;font-weight:700;letter-spacing:.04em;padding:.1rem .35rem;border-radius:.3rem;background:var(--grad);color:#fff;vertical-align:middle}
+.tag.warn{background:var(--warn);color:#000}
+.badge{position:absolute;right:-.2rem;top:-.2rem;min-width:1.15rem;height:1.15rem;padding:0 .3rem;border-radius:1rem;background:var(--err);color:#fff;font-size:.68rem;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
+.ch-main .badge{position:static;border:0;margin-left:auto}
+.av{--h:260;width:2.5rem;height:2.5rem;border-radius:50%;background:linear-gradient(135deg,hsl(var(--h) 70% 55%),hsl(calc(var(--h) + 50) 70% 45%));display:inline-grid;place-items:center;font-weight:700;color:#fff;position:relative;flex:none;font-size:1.05rem}
+.av.sm{width:1.9rem;height:1.9rem;font-size:.85rem}.av.xl{width:5rem;height:5rem;font-size:2rem}
+.pres{position:absolute;right:-1px;bottom:-1px;width:.8rem;height:.8rem;border-radius:50%;border:2.5px solid var(--bg1);background:var(--tx3)}
+.pres.online{background:var(--ok)}.pres.idle{background:var(--warn)}.pres.dnd{background:var(--err)}
+input:not([type=checkbox]):not([type=range]),select,textarea{width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:.7rem;padding:.6rem .8rem;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);outline:0;box-shadow:0 0 0 3px #8b5cf633}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--tx2);margin:.8rem 0 .3rem}
+.err{color:var(--err);font-size:.85rem;min-height:1.1rem;margin:.4rem 0}
+.note{font-size:.8rem;color:var(--tx3);margin:.6rem 0}
+.notice{border-radius:.8rem;padding:.7rem .9rem;font-size:.82rem;background:var(--bg3);border:1px solid var(--line);color:var(--tx2)}
+.notice.warn{border-color:var(--warn);background:#f59e0b14}
+.notice b{color:var(--tx)}
+.tabs{display:flex;gap:.3rem;background:var(--bg3);padding:.25rem;border-radius:.8rem;overflow-x:auto}
+.tabs button{flex:1;padding:.45rem .8rem;border-radius:.6rem;color:var(--tx2);font-weight:600;white-space:nowrap}
+.tabs button.on{background:var(--bg4);color:var(--tx)}
+.tabs.sm button{flex:none;padding:.3rem .7rem;font-size:.85rem}
+.link{color:var(--acc2);text-decoration:underline}
+.row{display:flex;align-items:center;gap:.7rem}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--line);font-size:.95rem;color:var(--tx);margin:0;font-weight:500}
+.switch input{width:2.6rem;height:1.4rem;accent-color:var(--acc)}
+.skel{background:linear-gradient(90deg,var(--bg3),var(--bg4),var(--bg3));background-size:200% 100%;animation:shine 1.2s infinite;border-radius:.6rem}
+@keyframes shine{to{background-position:-200% 0}}@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 #22c55e88}50%{box-shadow:0 0 0 .5rem #22c55e00}}
+@keyframes dots{0%,80%,100%{opacity:.2}40%{opacity:1}}
+/* ============ BOOT + AUTH ============ */
+#boot{position:fixed;inset:0;z-index:300;background:var(--bg);display:grid;place-content:center;justify-items:center;gap:1rem;transition:opacity .35s}
+#boot.hide{opacity:0;pointer-events:none}
+.spinner{width:2.2rem;height:2.2rem;border:3px solid var(--bg4);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite}
+.logo{display:flex;align-items:center;gap:.6rem;font-weight:800;letter-spacing:.18em;font-size:1.4rem}
+.logo-mark{width:2.4rem;height:2.4rem;border-radius:.8rem;background:var(--grad);display:grid;place-items:center;color:#fff;letter-spacing:0;box-shadow:0 0 28px #8b5cf655}
+#auth{min-height:100dvh;display:grid;place-items:center;padding:1rem;background:radial-gradient(60rem 30rem at 10% 0%,#8b5cf622,transparent),radial-gradient(50rem 30rem at 100% 100%,#3b82f622,transparent),var(--bg);overflow:auto;position:fixed;inset:0;z-index:50}
+.auth-card{width:100%;max-width:26rem;background:var(--bg1);border:1px solid var(--line);border-radius:1.4rem;padding:1.6rem;box-shadow:var(--shadow);animation:pop .4s}
+.auth-card .tag-line{color:var(--tx2);margin:.4rem 0 1.1rem;font-size:.9rem}
+.pw{position:relative;display:block}.pw input{padding-right:2.8rem}
+.pw .icon-btn{position:absolute;right:.2rem;top:50%;transform:translateY(-50%);width:2.2rem;height:2.2rem}
+.hint{font-size:.75rem;color:var(--tx3);margin-top:.25rem}.hint.ok{color:var(--ok)}.hint.bad{color:var(--err)}
+/* ============ APP LAYOUT ============ */
+#app{display:flex;height:100dvh;padding:.5rem;gap:.5rem;background:var(--bg)}
+.left{display:flex;gap:.5rem;flex:none;min-height:0;transition:transform .25s}
+#rail{width:4.4rem;background:var(--bg1);border-radius:1.1rem;display:flex;flex-direction:column;align-items:center;gap:.6rem;padding:.7rem 0;overflow-y:auto;scrollbar-width:none;border:1px solid var(--line)}
+.rail-btn{width:3.1rem;height:3.1rem;border-radius:1rem;background:var(--bg3);display:grid;place-items:center;font-size:1.3rem;position:relative;flex:none;transition:.2s;color:var(--tx)}
+.rail-btn:hover{border-radius:.8rem;background:var(--bg4)}
+.rail-btn.on{background:var(--grad);color:#fff;border-radius:.8rem;box-shadow:0 0 18px #8b5cf655}
+.rail-btn.add{color:var(--ok);background:transparent;border:2px dashed var(--line)}
+.rail-btn.ghost{background:transparent;color:var(--tx2)}
+.rail-sep{width:2rem;height:2px;background:var(--line);flex:none}
+#sidebar{width:16.5rem;background:var(--bg1);border-radius:1.1rem;display:flex;flex-direction:column;min-height:0;border:1px solid var(--line)}
+.sb-scroll{flex:1;overflow-y:auto;padding:.7rem .6rem}
+.sb-head{display:flex}
+.sb-title{display:flex;align-items:center;justify-content:space-between;width:100%;padding:.55rem .6rem;border-radius:.7rem;font-weight:800;font-size:1.02rem}
+.sb-title:hover{background:var(--bg3)}.sb-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-meta{font-size:.75rem;color:var(--tx3);padding:0 .6rem .5rem}
+.sb-actions{display:flex;gap:.35rem;flex-wrap:wrap;padding:.2rem .3rem .6rem}
+.sb-search{margin-bottom:.5rem;padding:.45rem .7rem!important;font-size:.88rem}
+.cat{display:flex;align-items:center;justify-content:space-between;padding:.7rem .4rem .2rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);font-weight:700}
+.cat button{color:inherit;display:flex;align-items:center;gap:.25rem;text-transform:uppercase;letter-spacing:.08em;font-size:.7rem;font-weight:700}
+.cat .mini{opacity:0}.cat:hover .mini,.cat .mini:focus-visible{opacity:1}
+.ch-item{display:flex;align-items:center;border-radius:.65rem;position:relative}
+.ch-item:hover,.ch-item.on{background:var(--bg3)}.ch-item.on{box-shadow:inset 3px 0 var(--acc)}
+.ch-main{flex:1;min-width:0;display:flex;align-items:center;gap:.5rem;padding:.5rem .6rem;color:var(--tx2);text-align:left}
+.ch-item.on .ch-main,.ch-item:hover .ch-main{color:var(--tx)}
+.ch-main .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-main .fav{color:var(--warn);width:.9em}.ch-main .pinn{color:var(--acc);width:.9em}
+.mini{width:1.8rem;height:1.8rem;display:grid;place-items:center;border-radius:.5rem;color:var(--tx3);flex:none}
+.mini:hover{background:var(--bg4);color:var(--tx)}
+.ch-item .mini{opacity:0}.ch-item:hover .mini,.ch-item .mini:focus-visible{opacity:1}
+.sb-btn{display:flex;align-items:center;gap:.6rem;width:100%;padding:.6rem .7rem;border-radius:.7rem;color:var(--tx2);font-weight:600;position:relative}
+.sb-btn:hover,.sb-btn.on{background:var(--bg3);color:var(--tx)}.sb-btn .badge{position:static;margin-left:auto;border:0}
+.user-panel{display:flex;align-items:center;gap:.2rem;padding:.55rem;border-top:1px solid var(--line);background:var(--bg2);border-radius:0 0 1.1rem 1.1rem}
+.up-id{flex:1;min-width:0;display:flex;align-items:center;gap:.6rem;text-align:left;padding:.2rem;border-radius:.6rem}
+.up-id:hover{background:var(--bg3)}.up-txt{display:flex;flex-direction:column;min-width:0}
+.up-txt b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.92rem}.up-txt small{color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg2);border-radius:1.1rem;border:1px solid var(--line);overflow:hidden}
+#topbar{display:flex;align-items:center;gap:.4rem;padding:.55rem .8rem;border-bottom:1px solid var(--line);min-height:3.4rem}
+#topbar .ttl{display:flex;align-items:center;gap:.5rem;min-width:0;flex:1}
+#topbar .ttl b{white-space:nowrap}
+#topbar .desc{color:var(--tx3);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-left:1px solid var(--line);padding-left:.7rem;max-width:40ch}
+#topbar .desc:hover{color:var(--tx)}
+#content{flex:1;min-height:0;display:flex;flex-direction:column}
+#members{width:15rem;background:var(--bg1);border-radius:1.1rem;border:1px solid var(--line);overflow-y:auto;padding:.7rem .5rem;flex:none;transition:transform .25s}
+.members-off #members{display:none}
+.sb-collapsed #sidebar{display:none}
+.mem-h{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);font-weight:700;padding:.8rem .5rem .3rem}
+.mem{display:flex;align-items:center;gap:.6rem;width:100%;padding:.4rem .5rem;border-radius:.6rem;text-align:left}
+.mem:hover{background:var(--bg3)}.mem .mn{min-width:0;display:flex;flex-direction:column}
+.mem b{font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mem small{color:var(--tx3);font-size:.74rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mem.off{opacity:.55}
+#backdrop{position:fixed;inset:0;background:#000a;z-index:40;opacity:0;pointer-events:none;transition:.25s}
+.only-mobile{display:none}
+/* ============ CHAT ============ */
+.chat{display:flex;flex-direction:column;flex:1;min-height:0;position:relative}
+.msgs{flex:1;overflow-y:auto;padding:1rem 0 .4rem;scroll-behavior:auto;overscroll-behavior:contain}
+.day{display:flex;align-items:center;gap:.8rem;margin:1rem 1.2rem;color:var(--tx3);font-size:.75rem;font-weight:600}
+.day::before,.day::after{content:"";flex:1;height:1px;background:var(--line)}
+.msg{display:flex;gap:.8rem;padding:.3rem 1rem;margin:0 .4rem;border-radius:.7rem;position:relative;animation:pop .2s}
+.compact .msg{padding:.1rem 1rem}
+.msg:hover,.msg:focus-visible{background:var(--bg3)}
+.msg.mention-me{background:#8b5cf620;box-shadow:inset 3px 0 var(--acc)}
+.msg.pinned{box-shadow:inset 3px 0 var(--warn)}
+.msg.flash{animation:flash 1.8s}@keyframes flash{0%,60%{background:#3b82f64d}}
+.msg .gut{width:2.5rem;flex:none;display:flex;justify-content:center;padding-top:.15rem}
+.msg.grp .gut{align-items:center;padding:0}.msg .hov{opacity:0;font-size:.65rem;color:var(--tx3)}.msg:hover .hov{opacity:1}
+.mb{min-width:0;flex:1}
+.mh{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+.mh .au{color:hsl(var(--h,260) 80% 70%)}[data-theme=light] .mh .au{color:hsl(var(--h,260) 60% 38%)}
+.mh time,.ed{font-size:.72rem;color:var(--tx3)}.pin-ic{color:var(--warn);width:.85em}
+.txt{word-wrap:break-word;overflow-wrap:anywhere;white-space:normal}
+.txt code{background:var(--bg4);padding:.1rem .35rem;border-radius:.35rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em}
+.txt pre{background:var(--bg);border:1px solid var(--line);border-radius:.7rem;padding:.7rem .9rem;margin:.35rem 0;overflow-x:auto;white-space:pre}
+.txt pre code{background:none;padding:0}
+.txt blockquote{border-left:3px solid var(--acc);padding-left:.7rem;color:var(--tx2);margin:.2rem 0}
+.mention{background:#8b5cf63d;color:var(--acc);border-radius:.3rem;padding:0 .2rem;font-weight:600}
+.quote{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--tx3);margin-bottom:.15rem;cursor:pointer;max-width:100%}
+.quote span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.quote:hover{color:var(--tx)}
+.reacts{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.35rem}
+.react{display:inline-flex;gap:.3rem;align-items:center;padding:.15rem .55rem;border-radius:.6rem;background:var(--bg3);border:1px solid var(--line);font-size:.85rem}
+.react.me{border-color:var(--acc);background:#8b5cf626}.react:hover{border-color:var(--acc2)}
+.tools{position:absolute;right:.8rem;top:-1rem;display:none;gap:.1rem;background:var(--bg4);border:1px solid var(--line);border-radius:.7rem;padding:.15rem;box-shadow:var(--shadow);z-index:2}
+.msg:hover .tools,.msg:focus-within .tools{display:flex}
+.tools .icon-btn{width:2rem;height:2rem}
+.msg.blocked{color:var(--tx3);font-size:.85rem;font-style:italic}
+.edit-ta{min-height:3rem;resize:vertical}.edit-hint{font-size:.75rem;color:var(--tx3);margin-top:.3rem}
+.typing{height:1.4rem;padding:0 1.4rem;font-size:.78rem;color:var(--tx3);display:flex;align-items:center;gap:.3rem}
+.typing i{display:inline-block;width:.3rem;height:.3rem;border-radius:50%;background:var(--tx2);animation:dots 1.2s infinite}.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+.replybar{display:flex;align-items:center;gap:.5rem;margin:0 1rem;padding:.4rem .8rem;background:var(--bg3);border-radius:.7rem .7rem 0 0;font-size:.82rem;color:var(--tx2);border:1px solid var(--line);border-bottom:0}
+.replybar span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.composer{display:flex;align-items:flex-end;gap:.3rem;margin:0 1rem .3rem;padding:.35rem;background:var(--bg3);border:1px solid var(--line);border-radius:1rem;transition:.15s}
+.composer:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px #8b5cf626}
+.composer textarea{border:0!important;background:transparent!important;resize:none;max-height:10rem;padding:.55rem .4rem!important;box-shadow:none!important;min-height:2.4rem}
+.composer .send{width:2.6rem;height:2.6rem;border-radius:.8rem;background:var(--grad);color:#fff;display:grid;place-items:center;flex:none}
+.composer .send:hover{filter:brightness(1.15)}
+.chat .kbd{font-size:.7rem;color:var(--tx3);padding:0 1.4rem calc(.5rem + var(--sab))}
+.filterbar{display:flex;gap:.5rem;padding:.5rem 1rem;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.filterbar input{flex:1;min-width:10rem}.filterbar select{width:auto}
+.empty{margin:auto;text-align:center;padding:2rem 1.2rem;max-width:26rem;color:var(--tx2);animation:pop .3s}
+.empty .big{width:4.4rem;height:4.4rem;border-radius:1.4rem;background:var(--grad);display:grid;place-items:center;margin:0 auto 1rem;font-size:1.8rem;color:#fff;box-shadow:0 0 30px #8b5cf655}
+.empty h3{color:var(--tx);margin-bottom:.4rem;font-size:1.2rem}.empty .acts{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1.1rem}
+/* ============ PAGES ============ */
+.page{flex:1;overflow-y:auto;padding:1.2rem 1.4rem;max-width:56rem;width:100%;margin:0 auto}
+.page-h{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.page h2{display:flex;align-items:center;gap:.6rem;font-size:1.3rem}.page h3{margin:1.4rem 0 .6rem;font-size:1rem;color:var(--tx2)}
+.inline-form{display:flex;gap:.6rem;margin-bottom:.3rem}.inline-form input{flex:1}
+.list-row{display:flex;align-items:center;gap:.8rem;padding:.65rem .8rem;border-radius:.8rem;background:var(--bg3);border:1px solid var(--line);margin:.4rem 0}
+.list-row .grow{min-width:0}.list-row small{color:var(--tx3);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-row.done b{text-decoration:line-through;color:var(--tx3)}
+.list-row .acts{display:flex;gap:.2rem;flex-wrap:wrap}
+.search{margin:.6rem 0}
+.notes-ta{min-height:55vh;resize:vertical;line-height:1.6}
+.bar{height:.5rem;border-radius:.4rem;background:var(--bg4);overflow:hidden;margin-top:.3rem}.bar i{display:block;height:100%;background:var(--grad)}
+.poll-opt{display:block;width:100%;text-align:left;padding:.55rem .7rem;border-radius:.7rem;background:var(--bg3);border:1px solid var(--line);margin:.35rem 0}
+.poll-opt:hover,.poll-opt.me{border-color:var(--acc)}.poll-opt .row{justify-content:space-between}
+.err-card{margin:auto;text-align:center;padding:2rem;max-width:28rem}
+/* ============ VOICE ============ */
+.voice{flex:1;display:flex;flex-direction:column;padding:1rem;gap:1rem;overflow-y:auto}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:.8rem}
+.tile{aspect-ratio:16/10;background:var(--bg3);border:1px solid var(--line);border-radius:1rem;display:grid;place-items:center;position:relative;text-align:center}
+.tile .nm{position:absolute;left:.6rem;bottom:.5rem;font-size:.8rem;background:#0008;color:#fff;padding:.1rem .5rem;border-radius:.5rem}
+.tile.sp{animation:pulse 1.6s infinite;border-color:var(--ok)}
+.tile .cam{position:absolute;top:.5rem;right:.5rem;color:var(--tx3)}
+.ctrls{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+.ctrls .rbtn{width:3.2rem;height:3.2rem;border-radius:50%;background:var(--bg4);display:grid;place-items:center;font-size:1.2rem;transition:.15s}
+.ctrls .rbtn:hover{filter:brightness(1.2)}.ctrls .rbtn.off{background:var(--err);color:#fff}.ctrls .rbtn.act{background:var(--ok);color:#fff}.ctrls .rbtn.leave{background:var(--err);color:#fff}
+/* ============ OVERLAYS ============ */
+.modal-back{position:fixed;inset:0;background:#000b;z-index:100;display:grid;place-items:center;padding:1rem;animation:pop .15s}
+.modal{width:100%;max-width:30rem;max-height:92dvh;display:flex;flex-direction:column;background:var(--bg1);border:1px solid var(--line);border-radius:1.3rem;box-shadow:var(--shadow);animation:pop .2s}
+.modal.wide{max-width:50rem}
+.modal>header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;border-bottom:1px solid var(--line)}
+.modal h3{font-size:1.1rem}.mbody{padding:1rem 1.1rem 1.2rem;overflow-y:auto}
+.mfoot{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.1rem}
+.split{display:flex;gap:1rem}.split>nav{display:flex;flex-direction:column;gap:.2rem;width:9.5rem;flex:none}
+.split>nav button{text-align:left;padding:.5rem .7rem;border-radius:.6rem;color:var(--tx2);display:flex;gap:.5rem;align-items:center}
+.split>nav button.on,.split>nav button:hover{background:var(--bg3);color:var(--tx)}.split>div{flex:1;min-width:0}
+.theme-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.theme-cards button{border:2px solid var(--line);border-radius:.9rem;padding:.8rem .4rem;background:var(--bg3);display:grid;gap:.3rem;place-items:center;font-weight:600}
+.theme-cards button.on{border-color:var(--acc)}
+.sw{width:2.4rem;height:1.4rem;border-radius:.5rem;border:1px solid #888}
+#ctx,#popover{position:fixed;z-index:150;background:var(--bg4);border:1px solid var(--line);border-radius:.9rem;box-shadow:var(--shadow);padding:.35rem;min-width:12rem;animation:pop .12s}
+#ctx button{display:flex;align-items:center;gap:.6rem;width:100%;padding:.5rem .7rem;border-radius:.6rem;text-align:left}
+#ctx button:hover,#ctx button:focus-visible{background:var(--bg3)}#ctx button.danger{color:var(--err)}
+#ctx hr{border:0;border-top:1px solid var(--line);margin:.25rem 0}
+#popover{padding:.6rem;min-width:0;width:min(21rem,calc(100vw - 1rem));max-height:min(26rem,70dvh);overflow-y:auto}
+.emo-tabs{display:flex;gap:.2rem;margin-bottom:.4rem;flex-wrap:wrap}.emo-tabs button{font-size:.75rem;padding:.2rem .5rem;border-radius:.5rem;color:var(--tx2)}.emo-tabs button.on{background:var(--bg3);color:var(--tx)}
+.emo-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:.1rem}
+.emo-grid button{font-size:1.3rem;padding:.25rem;border-radius:.5rem}.emo-grid button:hover{background:var(--bg3);transform:scale(1.2)}
+.pop-h{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin-bottom:.4rem;font-weight:700}
+.pop-h .btn{font-size:.75rem;padding:.2rem .5rem;min-height:0}
+.notif{display:flex;gap:.6rem;padding:.55rem;border-radius:.7rem;text-align:left;width:100%;align-items:flex-start}
+.notif:hover{background:var(--bg3)}.notif.unread{background:#8b5cf61a}.notif .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--acc);margin-top:.5rem;flex:none}.notif small{color:var(--tx3);display:block}
+#toasts{position:fixed;right:1rem;bottom:calc(1rem + var(--sab));display:flex;flex-direction:column;gap:.5rem;z-index:400;max-width:calc(100vw - 2rem)}
+.toast{padding:.7rem 1rem;border-radius:.9rem;background:var(--bg4);border:1px solid var(--line);box-shadow:var(--shadow);animation:pop .25s;border-left:4px solid var(--acc2);font-size:.9rem}
+.toast.ok{border-left-color:var(--ok)}.toast.error{border-left-color:var(--err)}.toast.warn{border-left-color:var(--warn)}
+#confirm-root{position:fixed;inset:0;z-index:200}
+kbd{background:var(--bg4);border:1px solid var(--line);border-radius:.4rem;padding:.05rem .4rem;font-size:.8rem;font-family:ui-monospace,monospace}
+/* ============ RESPONSIVE ============ */
+@media (max-width:980px){
+ #members{position:fixed;right:.5rem;top:.5rem;bottom:.5rem;z-index:60;transform:translateX(110%);box-shadow:var(--shadow);display:block!important}
+ #members.open{transform:none}
+}
+@media (max-width:760px){
+ body{font-size:16px}
+ #app{padding:0;gap:0}
+ #main{border-radius:0;border:0}
+ .left{position:fixed;left:0;top:0;bottom:0;z-index:60;transform:translateX(-105%);padding:.5rem;background:var(--bg);width:min(92vw,23rem);box-shadow:var(--shadow)}
+ .left.open{transform:none}
+ #sidebar{flex:1;width:auto}.sb-collapsed #sidebar{display:flex}
+ #members{right:0;top:0;bottom:0;border-radius:0}
+ #backdrop.on{opacity:1;pointer-events:auto}
+ .only-mobile{display:inline-grid}.only-desktop{display:none}
+ #topbar{padding-top:calc(.55rem + var(--sat))}
+ #topbar .desc{display:none}
+ .msg{padding:.3rem .6rem;gap:.6rem;margin:0}
+ .tools{display:flex;top:.1rem;right:.3rem;background:transparent;border:0;box-shadow:none}.tools .t-extra{display:none}
+ .composer{margin:0 .5rem .2rem}.composer textarea{font-size:16px}
+ .chat .kbd{display:none}.composer{margin-bottom:calc(.5rem + var(--sab))}
+ .ch-item .mini,.cat .mini{opacity:1}
+ .split{flex-direction:column}.split>nav{flex-direction:row;width:auto;overflow-x:auto}
+ .modal-back{padding:0;align-items:end}.modal{max-width:none;border-radius:1.3rem 1.3rem 0 0;max-height:94dvh}
+ #popover{left:.5rem!important;right:.5rem;bottom:.5rem;top:auto!important;width:auto}
+ .page{padding:1rem .9rem}.inline-form{flex-wrap:wrap}.emo-grid{grid-template-columns:repeat(7,1fr)}
+ #toasts{left:1rem}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<noscript>NEXUS needs JavaScript enabled.</noscript>
+
+<div id="boot" role="status" aria-label="Loading NEXUS"><div class="logo"><span class="logo-mark">N</span>NEXUS</div><div class="spinner"></div></div>
+
+<!-- ============ AUTH ============ -->
+<main id="auth" hidden>
+  <div class="auth-card">
+    <div class="logo"><span class="logo-mark">N</span>NEXUS</div>
+    <p class="tag-line">Community chat — <b>local demo prototype</b></p>
+    <div class="tabs" role="tablist">
+      <button role="tab" class="on" data-act="auth-tab" data-tab="login">Log in</button>
+      <button role="tab" data-act="auth-tab" data-tab="register">Register</button>
+    </div>
+    <form data-form="login" id="f-login" novalidate>
+      <label for="l-user">Username</label>
+      <input id="l-user" name="username" autocomplete="username" maxlength="20" required>
+      <label for="l-pass">Password</label>
+      <span class="pw"><input id="l-pass" name="password" type="password" autocomplete="current-password" required><button type="button" class="icon-btn" data-act="toggle-pw" aria-label="Show password"><i data-ic="eye"></i></button></span>
+      <div class="err" role="alert"></div>
+      <button class="btn primary wide">Log in</button>
+    </form>
+    <form data-form="register" id="f-register" hidden novalidate>
+      <label for="r-user">Username</label>
+      <input id="r-user" name="username" data-live="username" autocomplete="username" maxlength="20" required>
+      <div class="hint" id="r-hint">3–20 characters: letters, numbers, underscore. No email or phone needed.</div>
+      <label for="r-pass">Password</label>
+      <span class="pw"><input id="r-pass" name="password" data-live="password" type="password" autocomplete="new-password" required><button type="button" class="icon-btn" data-act="toggle-pw" aria-label="Show password"><i data-ic="eye"></i></button></span>
+      <div class="hint" id="r-str">Minimum 8 characters.</div>
+      <label for="r-conf">Confirm password</label>
+      <span class="pw"><input id="r-conf" name="confirm" type="password" autocomplete="new-password" required><button type="button" class="icon-btn" data-act="toggle-pw" aria-label="Show password"><i data-ic="eye"></i></button></span>
+      <div class="err" role="alert"></div>
+      <button class="btn primary wide">Create demo account</button>
+    </form>
+    <div class="notice warn" style="margin-top:1rem"><b>Demo mode only.</b> Accounts live in this browser's localStorage. Passwords are salted &amp; hashed (PBKDF2 when the browser allows it), but this is <b>not secure authentication</b> — anyone with access to this browser profile can read or modify the data. Real accounts, shared messages and live voice/video need a backend.</div>
+  </div>
+</main>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <div class="left" id="left"><nav id="rail" aria-label="Communities"></nav><aside id="sidebar" aria-label="Channels"></aside></div>
+  <section id="main"><header id="topbar"></header><div id="content"></div></section>
+  <aside id="members" aria-label="Members"></aside>
+  <div id="backdrop" data-act="close-drawers"></div>
+</div>
+
+<div id="ctx" role="menu" hidden></div>
+<div id="popover" hidden></div>
+<div id="modal-root" hidden></div>
+<div id="confirm-root" hidden></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   NEXUS — single-file local-demo prototype.
+   Layout of this script:
+   1. Utilities & icons   2. Storage & data validation   3. Auth (demo)
+   4. State & navigation  5. Rendering   6. Messaging & simulation
+   7. Overlays (modals, menus, pickers)   8. Forms & actions   9. Boot
+   Everything is stored in localStorage under the "nexus.v1." prefix.
+   Nothing here talks to a network — other "users" are local samples.
+   ===================================================================== */
+(()=>{
+'use strict';
+
+/* ---------- 1. UTILITIES & ICONS ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=(p='id')=>p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const isObj=v=>v&&typeof v==='object'&&!Array.isArray(v);
+const rand=a=>a[Math.floor(Math.random()*a.length)];
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const hueOf=n=>{let h=0;for(const ch of String(n))h=(h*31+ch.charCodeAt(0))%360;return h;};
+const fmtTime=t=>new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const dayKey=t=>new Date(t).toDateString();
+function fmtDay(t){const d=new Date(t),n=new Date();if(d.toDateString()===n.toDateString())return'Today';if(d.toDateString()===new Date(n-864e5).toDateString())return'Yesterday';return d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});}
+
+const ICONS={
+hash:'<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>',
+volume:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+video:'<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>',
+videooff:'<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/><line x1="1" y1="1" x2="23" y2="23"/>',
+mic:'<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
+micoff:'<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="1" y1="1" x2="23" y2="23"/>',
+monitor:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+settings:'<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+smile:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+reply:'<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>',
+edit:'<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+pin:'<path d="M12 17v5"/><path d="M9 3h6l-1 7 3 3v2H7v-2l3-3-1-7z"/>',
+copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+bookmark:'<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+userplus:'<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>',
+home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
+check:'<polyline points="20 6 9 17 4 12"/>',
+sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+moon:'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+eyeoff:'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
+more:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
+note:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+tasks:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+poll:'<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>',
+mega:'<path d="M3 11v2a1 1 0 0 0 1 1h3l7 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M18 8a5 5 0 0 1 0 8"/>',
+chevron:'<polyline points="6 9 12 15 18 9"/>',
+lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+ban:'<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>',
+filter:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',
+help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'
+};
+const ic=(n,c='')=>`<svg class="ic ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+function buildSprite(){
+  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.setAttribute('style','position:absolute;width:0;height:0');s.setAttribute('aria-hidden','true');
+  s.innerHTML=Object.entries(ICONS).map(([k,v])=>`<symbol id="i-${k}" viewBox="0 0 24 24">${v}</symbol>`).join('');
+  document.body.prepend(s);
+}
+const hydrate=(root=document)=>$$('[data-ic]',root).forEach(el=>{el.outerHTML=ic(el.dataset.ic);});
+
+/* Basic Markdown. Input is HTML-escaped FIRST, so only tags generated here can appear. */
+function md(src){
+  let s=esc(String(src).replace(/\u0000/g,''));
+  const blocks=[],inl=[];
+  s=s.replace(/```(?:[a-z0-9+#-]*\n)?([\s\S]*?)```/gi,(m,c)=>{blocks.push(c.replace(/^\n|\n$/g,''));return '\u0000B'+(blocks.length-1)+'\u0000';});
+  s=s.replace(/`([^`\n]+)`/g,(m,c)=>{inl.push(c);return '\u0000I'+(inl.length-1)+'\u0000';});
+  s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>')
+     .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
+     .replace(/__([^_\n]+)__/g,'<u>$1</u>')
+     .replace(/~~([^~\n]+)~~/g,'<s>$1</s>')
+     .replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]])/g,'<a href="$1" target="_blank" rel="noopener noreferrer nofollow">$1</a>')
+     .replace(/(^|\s)@([A-Za-z0-9_]{3,20})\b/g,(m,p,n)=>`${p}<span class="mention">@${n}</span>`)
+     .replace(/^&gt; ?(.*)$/gm,'<blockquote>$1</blockquote>')
+     .replace(/\n/g,'<br>')
+     .replace(/<\/blockquote><br>/g,'</blockquote>');
+  return s.replace(/\u0000I(\d+)\u0000/g,(m,i)=>`<code>${inl[i]}</code>`).replace(/\u0000B(\d+)\u0000/g,(m,i)=>`<pre><code>${blocks[i]}</code></pre>`);
+}
+
+/* ---------- 2. STORAGE & DATA VALIDATION ---------- */
+const NS='nexus.v1.';
+const store={
+  corrupt:false,
+  get(k,fb){
+    let raw=null;
+    try{raw=localStorage.getItem(NS+k);if(raw===null)return fb;return JSON.parse(raw);}
+    catch(e){ // corrupted JSON: keep a backup copy, fall back to defaults
+      this.corrupt=true;try{localStorage.setItem(NS+'backup.'+k+'.'+Date.now(),raw);}catch(_){}
+      return fb;
+    }
+  },
+  set(k,v){try{localStorage.setItem(NS+k,JSON.stringify(v));return true;}catch(e){toast('Could not save to browser storage (full or blocked).','error');return false;}},
+  del(k){try{localStorage.removeItem(NS+k);}catch(e){}}
+};
+const strs=a=>Array.isArray(a)?a.filter(x=>typeof x==='string'):[];
+const objs=(a,t)=>Array.isArray(a)?a.filter(x=>isObj(x)&&(!t||t(x))):[];
+const str=(v,d='',max=5000)=>typeof v==='string'?v.slice(0,max):d;
+const num=(v,d=0)=>Number.isFinite(v)?v:d;
+function mergeDefaults(def,src){const o={};for(const k in def){const dv=def[k],sv=src&&src[k];o[k]=isObj(dv)?mergeDefaults(dv,isObj(sv)?sv:{}):(typeof sv===typeof dv?sv:dv);}return o;}
+
+const DEFAULT_SETTINGS={theme:'amoled',fontSize:15,compact:false,notif:{mentions:true,toasts:true,sound:false,simulate:true},privacy:{showOnline:true,allowDMs:true,readReceipts:false}};
+const PERMS={manageChannels:'Manage channels',manageMessages:'Manage messages',kick:'Kick members',ban:'Ban members',manageRoles:'Manage roles',manageCommunity:'Manage community'};
+const defaultRoles=()=>[
+  {id:'owner',name:'Owner',color:'#f59e0b',locked:true,perms:{manageChannels:1,manageMessages:1,kick:1,ban:1,manageRoles:1,manageCommunity:1}},
+  {id:'admin',name:'Admin',color:'#ef4444',perms:{manageChannels:1,manageMessages:1,kick:1,ban:1,manageRoles:1}},
+  {id:'mod',name:'Moderator',color:'#22c55e',perms:{manageMessages:1,kick:1}},
+  {id:'member',name:'Member',color:'#a2a2ba',perms:{}}];
+
+/* Sample users are fictional, simulated locally, and clearly badged "SAMPLE". */
+const SAMPLES={
+  Aria:{bio:'Sample user · Product designer',status:'Designing something new ✨',presence:'online',hue:285},
+  Kai:{bio:'Sample user · Frontend developer',status:'Shipping bugs, fixing bugs',presence:'online',hue:210},
+  Mira:{bio:'Sample user · Community manager',status:'Away for lunch',presence:'idle',hue:330},
+  Orion:{bio:'Sample user · Backend engineer',status:'Do not disturb — deep work',presence:'dnd',hue:160},
+  Zed:{bio:'Sample user · Night owl',status:'',presence:'offline',hue:40}
+};
+const RESERVED=new Set([...Object.keys(SAMPLES).map(s=>s.toLowerCase()),'admin','nexus','system','moderator']);
+const SIM_LINES=['Anyone tried the new theme switcher? Looks great 👀','Quick reminder: sample data only — nothing leaves your browser.','I like how the compact mode feels.','Did you see the poll in community tools?','**Tip:** press Ctrl+K to search everything.','Working on a new layout, will share soon ✨','Has anyone tested this on mobile?','+1 for AMOLED black 🖤','Coffee break ☕'];
+const ANSWERS=['Good question — I think it depends on the use case.','Probably yes! Worth a quick test.','Not sure, let me check and get back to you.','I’d say go for it 👍'];
+const GENERIC=['That’s a great point!','Haha, agreed 😄','Interesting — tell me more?','Nice work 👏','Sounds good to me!','I’ll take a look later today.','+1 from me'];
+
+const mkMsg=(author,text,ago,extra={})=>({id:uid('m'),author,text,ts:Date.now()-ago*60000,edited:false,replyTo:null,reactions:{},pinned:false,...extra});
+
+function seedData(user){
+  const mk=(name,cats,chs,mem,extra={})=>({id:uid('c'),name,icon:'',desc:'',sample:true,owner:user,categories:cats,channels:chs,members:mem,roles:defaultRoles(),announcements:[],polls:[],modlog:[],banned:[],mod:{blockLinks:false,words:[]},...extra});
+  const ch=(name,type,cat,desc,extra={})=>({id:uid('ch'),name,type,cat,desc,fav:false,pinned:false,...extra});
+  const k1={id:uid('k'),name:'Information'},k2={id:uid('k'),name:'Chat'},k3={id:uid('k'),name:'Voice & Video'};
+  const welcome=ch('welcome','text',k1.id,'Start here — about this sample community',{pinned:true}),general=ch('general','text',k2.id,'Everyday conversation',{fav:true}),dev=ch('dev-talk','text',k2.id,'Code, bugs and build tips'),random=ch('random','text',k2.id,'Anything goes'),lounge=ch('lounge','voice',k3.id,'Voice channel UI preview'),room=ch('video-room','video',k3.id,'Video call UI preview');
+  const hq=mk('NEXUS HQ',[k1,k2,k3],[welcome,general,dev,random,lounge,room],[{name:user,role:'owner'},{name:'Aria',role:'admin'},{name:'Kai',role:'mod'},{name:'Mira',role:'member'},{name:'Orion',role:'member'},{name:'Zed',role:'member'}],{icon:'🚀',desc:'Sample community — local demo data'});
+  hq.announcements=[{id:uid('a'),title:'Welcome to NEXUS 🎉',body:'This is a local demo. Messages, members and polls are stored only in your browser.',by:'Aria',ts:Date.now()-86400000}];
+  hq.polls=[{id:uid('p'),q:'Which accent colour do you prefer?',by:'Mira',ts:Date.now()-7200000,closed:false,options:[{t:'Purple',votes:['Aria','Kai']},{t:'Blue',votes:['Mira']},{t:'Both (gradient)',votes:[]}]}];
+  const k4={id:uid('k'),name:'Showcase'};
+  const dgs=ch('showcase','text',k4.id,'Share your work'),dgf=ch('feedback','text',k4.id,'Give and get feedback'),dgv=ch('critique-voice','voice',k4.id,'Voice UI preview');
+  const dg=mk('Design Guild',[k4],[dgs,dgf,dgv],[{name:'Aria',role:'owner'},{name:user,role:'mod'},{name:'Mira',role:'member'},{name:'Zed',role:'member'}],{icon:'🎨',desc:'Sample community where you are only a Moderator (permissions demo)',owner:'Aria'});
+  const messages={
+    [welcome.id]:[mkMsg('Aria','Welcome to **NEXUS**! 👋 This is a *sample community* with local demo data.',240,{pinned:true}),mkMsg('Kai','Everything is stored in your browser only. Other users here are **SAMPLE** accounts simulated locally.',238),mkMsg('Aria','Real multi-user chat, voice and video need a backend — see Settings → About.',236)],
+    [general.id]:[mkMsg('Kai','Morning everyone! ☕',120),mkMsg('Mira','Hey Kai! Try right-clicking (or long-pressing) a message 😄',118),mkMsg('Kai','Formatting works too:\n```js\nconst nexus = "hello";\nconsole.log(nexus);\n```',60),mkMsg('Mira','Nice! Also `inline code` and ~~strikethrough~~.',58)],
+    [dev.id]:[mkMsg('Orion','Anyone looked at the build pipeline?',30),mkMsg('Kai','Not yet — I’ll check it after lunch.',22),mkMsg('Orion','@'+user+' what do you think about the new layout?',5)],
+    [random.id]:[mkMsg('Zed','Night owl status: active 🦉',600)],
+    [dgs.id]:[mkMsg('Aria','Posted a new mockup for review 🎨',300),mkMsg('Mira','Love the gradients!',290)],
+    [dgf.id]:[]
+  };
+  return{profile:{display:user,bio:'',status:'',presence:'online',emoji:'',hue:hueOf(user)},settings:mergeDefaults(DEFAULT_SETTINGS,{}),
+    communities:[hq,dg],messages,friends:['Aria','Kai'],blocked:[],
+    notifications:[{id:uid('n'),text:'Welcome to NEXUS! This is a local demo — explore the sample communities.',ts:Date.now(),read:false,target:null,type:'system'}],
+    notes:'',tasks:[{id:uid('t'),text:'Explore the sample community',done:false,ts:Date.now()},{id:uid('t'),text:'Create your own community',done:false,ts:Date.now()}],bookmarks:[],reminders:[],
+    unread:{[dev.id]:1},collapsed:{},dmRead:{},dmNotified:{},nav:{cid:null,chid:null,view:'friends'}};
+}
+function sanitize(raw,user){
+  if(!isObj(raw))return null;
+  const base=seedData(user);const d={};
+  d.profile=mergeDefaults({display:user,bio:'',status:'',presence:'online',emoji:'',hue:hueOf(user)},raw.profile);
+  d.settings=mergeDefaults(DEFAULT_SETTINGS,raw.settings);
+  d.settings.fontSize=Math.min(19,Math.max(13,d.settings.fontSize));
+  d.communities=objs(raw.communities,c=>typeof c.id==='string'&&typeof c.name==='string').map(c=>({id:c.id,name:str(c.name,'Community',40),icon:str(c.icon,'',4),desc:str(c.desc,'',200),sample:!!c.sample,owner:str(c.owner,user,30),lastChid:str(c.lastChid,'',60),
+    categories:objs(c.categories,k=>typeof k.id==='string').map(k=>({id:k.id,name:str(k.name,'Category',32)})),
+    channels:objs(c.channels,x=>typeof x.id==='string'&&typeof x.name==='string').map(x=>({id:x.id,name:str(x.name,'channel',32),type:['text','voice','video'].includes(x.type)?x.type:'text',cat:str(x.cat,''),desc:str(x.desc,'',200),fav:!!x.fav,pinned:!!x.pinned})),
+    members:objs(c.members,m=>typeof m.name==='string').map(m=>({name:m.name,role:str(m.role,'member',30)})),
+    roles:(objs(c.roles,r=>typeof r.id==='string').length?objs(c.roles,r=>typeof r.id==='string'):defaultRoles()).map(r=>({id:r.id,name:str(r.name,'Role',30),color:/^#[0-9a-f]{6}$/i.test(r.color)?r.color:'#a2a2ba',locked:!!r.locked,perms:isObj(r.perms)?r.perms:{}})),
+    announcements:objs(c.announcements,a=>typeof a.id==='string'),polls:objs(c.polls,p=>typeof p.id==='string'&&Array.isArray(p.options)).map(p=>({...p,options:objs(p.options).map(o=>({t:str(o.t,'',80),votes:strs(o.votes)}))})),
+    modlog:objs(c.modlog),banned:strs(c.banned),mod:mergeDefaults({blockLinks:false,words:[]},c.mod)}));
+  d.communities.forEach(c=>{if(!Array.isArray(c.mod.words))c.mod.words=[];c.mod.words=strs(c.mod.words);});
+  d.messages={};
+  if(isObj(raw.messages))for(const k in raw.messages)d.messages[k]=objs(raw.messages[k],m=>typeof m.id==='string'&&typeof m.author==='string'&&typeof m.text==='string'&&Number.isFinite(m.ts)).map(m=>({id:m.id,author:m.author,text:m.text.slice(0,4000),ts:m.ts,edited:!!m.edited,replyTo:typeof m.replyTo==='string'?m.replyTo:null,reactions:isObj(m.reactions)?Object.fromEntries(Object.entries(m.reactions).filter(([e,u])=>Array.isArray(u)).map(([e,u])=>[e,strs(u)])):{},pinned:!!m.pinned}));
+  d.friends=strs(raw.friends);d.blocked=strs(raw.blocked);
+  d.notifications=objs(raw.notifications,n=>typeof n.id==='string'&&typeof n.text==='string').map(n=>({id:n.id,text:n.text.slice(0,300),ts:num(n.ts,Date.now()),read:!!n.read,target:isObj(n.target)?n.target:null,type:str(n.type,'system',20)})).slice(0,100);
+  d.notes=str(raw.notes,'',20000);
+  d.tasks=objs(raw.tasks,t=>typeof t.id==='string'&&typeof t.text==='string').map(t=>({id:t.id,text:t.text.slice(0,200),done:!!t.done,ts:num(t.ts,Date.now())}));
+  d.bookmarks=objs(raw.bookmarks,b=>typeof b.id==='string').map(b=>({id:b.id,type:b.type==='link'?'link':'msg',title:str(b.title,'',120),url:str(b.url,'',500),text:str(b.text,'',500),author:str(b.author,''),ts:num(b.ts,Date.now()),target:isObj(b.target)?b.target:null}));
+  d.reminders=objs(raw.reminders,r=>typeof r.id==='string'&&Number.isFinite(r.at)).map(r=>({id:r.id,text:str(r.text,'',200),at:r.at,done:!!r.done}));
+  d.unread=isObj(raw.unread)?Object.fromEntries(Object.entries(raw.unread).filter(([k,v])=>Number.isFinite(v)&&v>0)):{};
+  d.collapsed=isObj(raw.collapsed)?raw.collapsed:{};d.dmRead=isObj(raw.dmRead)?raw.dmRead:{};d.dmNotified=isObj(raw.dmNotified)?raw.dmNotified:{};
+  d.nav=mergeDefaults({cid:'',chid:'',view:'friends'},raw.nav);
+  return d;
+}
+let DM={};
+function loadDM(){const raw=store.get('dm',{});const o={};if(isObj(raw))for(const k in raw)o[k]=objs(raw[k],m=>typeof m.id==='string'&&typeof m.author==='string'&&typeof m.text==='string'&&Number.isFinite(m.ts)).map(m=>({id:m.id,author:m.author,to:str(m.to,''),text:m.text.slice(0,4000),ts:m.ts,edited:!!m.edited,replyTo:typeof m.replyTo==='string'?m.replyTo:null,reactions:isObj(m.reactions)?Object.fromEntries(Object.entries(m.reactions).filter(([e,u])=>Array.isArray(u)).map(([e,u])=>[e,strs(u)])):{},pinned:!!m.pinned}));return o;}
+
+/* ---------- 3. AUTH (DEMO ONLY — NOT SECURE) ---------- */
+let ACCTS={};
+function loadAccts(){const raw=store.get('accounts',{});ACCTS={};if(isObj(raw))for(const k in raw){const a=raw[k];if(isObj(a)&&typeof a.salt==='string'&&typeof a.hash==='string'&&typeof a.algo==='string')ACCTS[k]={salt:a.salt,hash:a.hash,algo:a.algo,created:num(a.created,Date.now()),pub:isObj(a.pub)?a.pub:{}};}}
+const saveAccts=()=>store.set('accounts',ACCTS);
+const findAcct=u=>Object.keys(ACCTS).find(k=>k.toLowerCase()===String(u).toLowerCase());
+const b64=bytes=>btoa(String.fromCharCode(...bytes));
+const rndSalt=()=>{const a=new Uint8Array(16);if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else for(let i=0;i<16;i++)a[i]=Math.floor(Math.random()*256);return b64(a);};
+async function hashPw(pw,salt,algo){
+  const want=algo||((window.crypto&&crypto.subtle)?'pbkdf2':'weak');
+  if(want==='pbkdf2'){
+    if(!(window.crypto&&crypto.subtle))throw new Error('This browser context cannot verify PBKDF2 hashes (needs https or localhost/file).');
+    const enc=new TextEncoder();const key=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);
+    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:120000,hash:'SHA-256'},key,256);
+    return{algo:'pbkdf2',hash:b64(new Uint8Array(bits))};
+  }
+  // Weak non-cryptographic fallback (cyrb53) used only when Web Crypto is unavailable.
+  let h1=0xdeadbeef,h2=0x41c6ce57;const s=salt+'|'+pw;
+  for(let r=0;r<2000;r++)for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  return{algo:'weak',hash:(h1>>>0).toString(36)+(h2>>>0).toString(36)};
+}
+const checkPw=async(pw,a)=>(await hashPw(pw,a.salt,a.algo)).hash===a.hash;
+
+/* ---------- 4. STATE & NAVIGATION ---------- */
+let me=null,D=null;
+const UI={};
+function resetUI(){Object.assign(UI,{cid:null,chid:null,view:'friends',dmUser:null,tools:'notes',ftab:'all',fq:'',chq:'',favOnly:false,replyTo:null,editing:null,filter:{q:'',type:'all',open:false},membersOpen:true,membersDrawer:false,leftOpen:false,typing:{},drafts:{},revealed:new Set(),loading:false,stab:'profile',ctab:'announce',voice:{ch:null,mic:true,deaf:false,cam:false,screen:false},tasksFilter:'all',gq:'',gscope:'all'});}
+resetUI();
+let DM_FRESH=false;
+let saveT=null;
+const saveSoon=()=>{clearTimeout(saveT);saveT=setTimeout(saveNow,200);};
+function saveNow(){clearTimeout(saveT);if(me&&D)store.set('user.'+me,D);}
+const C=()=>D&&D.communities.find(c=>c.id===UI.cid)||null;
+const CH=(c=C())=>c?c.channels.find(x=>x.id===UI.chid)||null:null;
+const pair=(a,b)=>[a,b].sort().join('|');
+const findChannel=id=>{for(const c of D.communities){const ch=c.channels.find(x=>x.id===id);if(ch)return{c,ch};}return null;};
+const myRole=c=>{const m=c.members.find(x=>x.name===me);return c.roles.find(r=>r.id===(m?m.role:'member'))||c.roles[c.roles.length-1];};
+const can=(p,c=C())=>!!c&&(c.owner===me||!!(myRole(c)&&myRole(c).perms[p]));
+function need(p){if(can(p))return true;toast(`You need the “${PERMS[p]}” permission in this community.`,'warn');return false;}
+const SIMP={};
+function info(name){
+  if(name===me){const p=D.profile;return{name,display:p.display||name,bio:p.bio,status:p.status,presence:p.presence==='invisible'?'offline':p.presence,emoji:p.emoji,hue:Number.isFinite(p.hue)?p.hue:hueOf(name),me:true};}
+  if(SAMPLES[name]){const s=SAMPLES[name];return{name,display:name,bio:s.bio,status:s.status,presence:SIMP[name]||s.presence,hue:s.hue,sample:true};}
+  const k=findAcct(name);
+  if(k){const p=ACCTS[k].pub||{};const on=Date.now()-num(store.get('hb.'+k,0))<40000;return{name:k,display:p.display||k,bio:p.bio||'',status:p.status||'',presence:on&&p.presence!=='invisible'?(p.presence||'online'):'offline',emoji:p.emoji,hue:Number.isFinite(p.hue)?p.hue:hueOf(k),local:true};}
+  return{name,display:name,bio:'',status:'',presence:'offline',hue:hueOf(name),unknown:true};
+}
+const av=(n,sz='',pres=false)=>{const i=info(n);return `<span class="av ${sz}" style="--h:${i.hue}">${i.emoji?esc(i.emoji):esc(String(i.display||n).charAt(0).toUpperCase())}${pres?`<i class="pres ${i.presence}" title="${i.presence}"></i>`:''}</span>`;};
+const presLabel=p=>({online:'Online',idle:'Idle',dnd:'Do not disturb',offline:'Offline',invisible:'Invisible'}[p]||p);
+
+function convo(){
+  if(!D)return null;
+  if(UI.cid===null&&UI.view==='dm'&&UI.dmUser){const k=pair(me,UI.dmUser);return{key:'dm:'+k,kind:'dm',get list(){return DM[k]||(DM[k]=[]);},persist(){store.set('dm',DM);}};}
+  if(UI.cid&&UI.view==='chat'){const ch=CH();if(ch&&ch.type==='text')return{key:ch.id,kind:'ch',get list(){return D.messages[ch.id]||(D.messages[ch.id]=[]);},persist(){saveSoon();}};}
+  return null;
+}
+function listFor(key){return key.startsWith('dm:')?(DM[key.slice(3)]=DM[key.slice(3)]||[]):(D.messages[key]=D.messages[key]||[]);}
+const persistFor=key=>key.startsWith('dm:')?store.set('dm',DM):saveSoon();
+const commUnread=c=>c.channels.reduce((n,ch)=>n+(D.unread[ch.id]||0),0);
+function dmUnreadFor(other){const k=pair(me,other);const last=D.dmRead[k]||0;return(DM[k]||[]).filter(m=>m.to===me&&m.ts>last).length;}
+const dmPartners=()=>Object.keys(DM).filter(k=>k.split('|').includes(me)&&DM[k].length).map(k=>({other:k.split('|').find(p=>p!==me)||me,last:DM[k][DM[k].length-1]})).sort((a,b)=>b.last.ts-a.last.ts);
+const totalDmUnread=()=>dmPartners().reduce((n,p)=>n+dmUnreadFor(p.other),0);
+const markDmRead=()=>{if(UI.dmUser)D.dmRead[pair(me,UI.dmUser)]=Date.now();};
+
+function nav(o){Object.assign(UI,o);D.nav={cid:UI.cid||'',chid:UI.chid||'',view:UI.view};saveSoon();UI.leftOpen=false;UI.membersDrawer=false;renderAll();}
+function goHome(view){nav({cid:null,chid:null,view:view||(D.communities.length?'friends':'welcome')});}
+function openCommunity(cid){
+  const c=D.communities.find(x=>x.id===cid);if(!c)return;
+  const chid=(c.channels.find(x=>x.id===c.lastChid)||c.channels.find(x=>x.type==='text')||c.channels[0]||{}).id||null;
+  UI.loading=true;nav({cid,chid,view:'chat',replyTo:null,editing:null,filter:{q:'',type:'all',open:false}});
+  if(chid)delete D.unread[chid];
+  setTimeout(()=>{UI.loading=false;renderContent();renderMembers();},220);
+}
+function openChannel(chid,msgId){
+  const f=C()&&CH(C())&&null;const c=C();if(!c)return;const ch=c.channels.find(x=>x.id===chid);if(!ch)return;
+  c.lastChid=chid;if(ch.type==='text')delete D.unread[chid];
+  nav({chid,view:'chat',replyTo:null,editing:null,filter:{q:'',type:'all',open:false}});
+  if(msgId)jumpTo(msgId);
+}
+function openDM(user,msgId){
+  if(D.blocked.includes(user)){toast('You blocked this user. Unblock them to send messages.','warn');return;}
+  nav({cid:null,chid:null,view:'dm',dmUser:user,replyTo:null,editing:null,filter:{q:'',type:'all',open:false}});markDmRead();renderSidebar();renderTopbar();
+  if(msgId)jumpTo(msgId);
+}
+function gotoTarget(t){
+  closeModal();closeTransient();
+  if(!t)return;
+  if(t.dm){openDM(t.dm,t.msgId);return;}
+  if(t.cid&&D.communities.some(c=>c.id===t.cid)){UI.cid=t.cid;openChannel(t.chid,t.msgId);}
+}
+function jumpTo(id){setTimeout(()=>{const el=$(`#msgs [data-id="${CSS.escape(id)}"]`);if(el){el.scrollIntoView({block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1800);}else toast('That message is hidden by the current filter or was deleted.','warn');},60);}
+const closeDrawers=()=>{UI.leftOpen=false;UI.membersDrawer=false;syncDrawers();};
+function syncDrawers(){$('#left').classList.toggle('open',UI.leftOpen);$('#members').classList.toggle('open',UI.membersDrawer);$('#backdrop').classList.toggle('on',UI.leftOpen||UI.membersDrawer);}
+
+/* Theme / appearance */
+const THEMES=['amoled','dark','light'];
+function applyUi(s){
+  const st=s||(D?D.settings:DEFAULT_SETTINGS);
+  document.documentElement.dataset.theme=st.theme;document.documentElement.style.setProperty('--font',st.fontSize+'px');
+  document.body.classList.toggle('compact',!!st.compact);
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.content={amoled:'#000000',dark:'#0f0f17',light:'#e9e9f4'}[st.theme];
+  store.set('ui',{theme:st.theme,fontSize:st.fontSize,compact:!!st.compact});
+}
+function setTheme(t){D.settings.theme=t;applyUi();saveSoon();renderRail();if(modalState)refreshModal();}
+
+/* ---------- 5. RENDERING ---------- */
+function renderAll(){renderRail();renderSidebar();renderTopbar();renderContent();renderMembers();syncDrawers();}
+
+function renderRail(){
+  const du=totalDmUnread();const ti=D.settings.theme==='light'?'sun':'moon';
+  $('#rail').innerHTML=
+   `<button class="rail-btn ${!UI.cid?'on':''}" data-act="home" title="Home" aria-label="Home">${ic('home')}${du?`<b class="badge">${du}</b>`:''}</button><span class="rail-sep"></span>`+
+   D.communities.map(c=>{const u=commUnread(c);return `<button class="rail-btn ${UI.cid===c.id?'on':''}" data-act="open-community" data-id="${esc(c.id)}" data-ctx="community" title="${esc(c.name)}" aria-label="${esc(c.name)}">${esc(c.icon||c.name.charAt(0).toUpperCase())}${u?`<b class="badge">${u}</b>`:''}</button>`;}).join('')+
+   `<button class="rail-btn add" data-act="create-community" title="Create a community" aria-label="Create a community">${ic('plus')}</button><span class="grow"></span>
+    <button class="rail-btn ghost" data-act="cycle-theme" title="Switch theme (${D.settings.theme})" aria-label="Switch theme">${ic(ti)}</button>`;
+}
+function userPanel(){const i=info(me);return `<div class="user-panel"><button class="up-id" data-act="open-profile" aria-label="Open profile">${av(me,'',true)}<span class="up-txt"><b>${esc(i.display)}</b><small>${esc(D.profile.status||presLabel(D.profile.presence))}</small></span></button><button class="icon-btn" data-act="open-settings" title="Settings" aria-label="Settings">${ic('settings')}</button><button class="icon-btn" data-act="logout" title="Log out" aria-label="Log out">${ic('logout')}</button></div>`;}
+function renderSidebar(){
+  if(document.activeElement&&document.activeElement.id==='chq')return;
+  $('#sidebar').innerHTML=`<div class="sb-scroll">${UI.cid?communitySidebar(C()):homeSidebar()}</div>${userPanel()}`;
+  applyChannelFilter();
+}
+function homeSidebar(){
+  const rec=dmPartners();
+  return `<div class="sb-head"><div class="sb-title"><span>Home</span></div></div>
+  <button class="sb-btn ${UI.view==='friends'?'on':''}" data-act="open-friends">${ic('users')} Friends</button>
+  <button class="sb-btn ${UI.view==='tools'?'on':''}" data-act="open-tools">${ic('note')} Notes &amp; tasks</button>
+  <div class="cat"><span>Direct messages</span><button class="mini" data-act="open-friends" aria-label="New message" title="New message">${ic('plus')}</button></div>
+  ${rec.length?rec.map(p=>{const u=dmUnreadFor(p.other);return `<div class="ch-item ${UI.view==='dm'&&UI.dmUser===p.other?'on':''}"><button class="ch-main" data-act="open-dm" data-user="${esc(p.other)}">${av(p.other,'sm',true)}<span class="nm">${esc(info(p.other).display)}</span>${u?`<b class="badge">${u}</b>`:''}</button></div>`;}).join(''):`<p class="note" style="padding:.4rem .6rem">No conversations yet. Open <b>Friends</b> and press Message.</p>`}
+  ${D.communities.length?'':`<div class="notice" style="margin-top:1rem">You haven't joined a community yet.<br><button class="btn primary sm" style="margin-top:.6rem" data-act="create-community">${ic('plus')} Create one</button></div>`}`;
+}
+function channelItem(c,ch){
+  const u=D.unread[ch.id]||0,icn=ch.type==='text'?'hash':ch.type==='voice'?'volume':'video';
+  return `<div class="ch-item ${ch.id===UI.chid&&UI.view==='chat'?'on':''}" data-name="${esc(ch.name.toLowerCase())}" data-ctx="channel" data-id="${esc(ch.id)}"><button class="ch-main" data-act="open-channel" data-id="${esc(ch.id)}" title="${esc(ch.desc||ch.name)}">${ic(icn)}<span class="nm">${esc(ch.name)}</span>${ch.fav?ic('star','fav'):''}${ch.pinned?ic('pin','pinn'):''}${u?`<b class="badge">${u}</b>`:''}</button><button class="mini" data-act="channel-menu" data-id="${esc(ch.id)}" aria-label="Options for ${esc(ch.name)}">${ic('more')}</button></div>`;
+}
+function communitySidebar(c){
+  if(!c)return '';
+  const show=ch=>!UI.favOnly||ch.fav;
+  const pinned=c.channels.filter(ch=>ch.pinned&&show(ch));
+  let h=`<div class="sb-head"><button class="sb-title" data-act="community-menu" aria-haspopup="menu"><span>${esc(c.name)}</span>${ic('chevron')}</button></div>
+  <div class="sb-meta">${c.members.length} member${c.members.length===1?'':'s'} · <span class="tag ${c.sample?'':'warn'}">${c.sample?'SAMPLE':'LOCAL'}</span></div>
+  <div class="sb-actions"><button class="chip" data-act="community-tools">${ic('shield')} Tools</button><button class="chip ${UI.favOnly?'on':''}" data-act="fav-only">${ic('star')} Favorites</button><button class="chip" data-act="create-channel">${ic('plus')} Channel</button></div>
+  <input class="sb-search" id="chq" type="search" placeholder="Search channels" aria-label="Search channels" value="${esc(UI.chq)}">`;
+  if(pinned.length)h+=`<div class="cat"><span>${ic('pin')} Pinned</span></div>`+pinned.map(ch=>channelItem(c,ch)).join('');
+  const groups=[...c.categories,{id:'',name:'Channels'}];
+  for(const k of groups){
+    const chs=c.channels.filter(ch=>(ch.cat===k.id||(!k.id&&!c.categories.some(x=>x.id===ch.cat)))&&!ch.pinned&&show(ch));
+    if(!chs.length&&(k.id===''||UI.favOnly))continue;
+    const col=D.collapsed[k.id]&&k.id;
+    h+=`<div class="cat" ${k.id?`data-ctx="category" data-id="${esc(k.id)}"`:''}><button data-act="toggle-cat" data-id="${esc(k.id)}" aria-expanded="${!col}">${ic(col?'plus':'chevron')} ${esc(k.name)}</button>${k.id?`<button class="mini" data-act="add-channel-in" data-id="${esc(k.id)}" aria-label="Add channel to ${esc(k.name)}">${ic('plus')}</button>`:''}</div>`;
+    if(!col)h+=chs.map(ch=>channelItem(c,ch)).join('');
+    else h+=chs.filter(ch=>ch.id===UI.chid).map(ch=>channelItem(c,ch)).join('');
+  }
+  if(!c.channels.length)h+=`<p class="note" style="padding:.4rem .6rem">No channels yet.</p>`;
+  return h;
+}
+function applyChannelFilter(){const q=UI.chq.trim().toLowerCase();$$('.ch-item[data-name]').forEach(el=>{el.hidden=!!q&&!el.dataset.name.includes(q);});}
+
+function renderTopbar(){
+  const nUnread=D.notifications.filter(n=>!n.read).length;
+  const bell=`<button class="icon-btn" data-act="notif" aria-label="Notifications" title="Notifications (Alt+N)">${ic('bell')}${nUnread?`<b class="badge">${nUnread}</b>`:''}</button>`;
+  const search=`<button class="icon-btn" data-act="search" aria-label="Search" title="Search (Ctrl+K)">${ic('search')}</button>`;
+  let left='',mid='';
+  const hamb=`<button class="icon-btn only-mobile" data-act="toggle-left" aria-label="Open navigation">${ic('menu')}</button><button class="icon-btn only-desktop" data-act="toggle-sidebar" aria-label="Collapse or expand channel sidebar" title="Toggle sidebar">${ic('menu')}</button>`;
+  const ch=UI.cid&&UI.view==='chat'?CH():null;
+  if(UI.cid&&UI.view==='chat'&&ch){
+    left=`<div class="ttl">${ic(ch.type==='text'?'hash':ch.type==='voice'?'volume':'video')}<b>${esc(ch.name)}</b><button class="desc" data-act="edit-channel" data-id="${esc(ch.id)}" title="Edit description">${esc(ch.desc||'Add a description')}</button></div>`;
+    if(ch.type==='text')mid=`<button class="icon-btn" data-act="pins" aria-label="Pinned messages" title="Pinned messages">${ic('pin')}</button><button class="icon-btn ${UI.filter.open||UI.filter.q||UI.filter.type!=='all'?'on':''}" data-act="filter-toggle" aria-label="Filter messages" title="Filter messages">${ic('filter')}</button>`;
+  }else if(UI.view==='dm'&&UI.dmUser){
+    const i=info(UI.dmUser);left=`<div class="ttl">${av(UI.dmUser,'sm',true)}<b>${esc(i.display)}</b><span class="desc">${esc(presLabel(i.presence))}${i.sample?' · sample user':i.local?' · local demo user':''}</span></div>`;
+    mid=`<button class="icon-btn" data-act="pins" aria-label="Pinned messages">${ic('pin')}</button><button class="icon-btn ${UI.filter.open?'on':''}" data-act="filter-toggle" aria-label="Filter messages">${ic('filter')}</button><button class="icon-btn" data-act="call-preview" aria-label="Start call (UI preview)" title="Call (UI preview)">${ic('phone')}</button>`;
+  }else left=`<div class="ttl">${ic(UI.view==='tools'?'note':UI.view==='welcome'?'home':'users')}<b>${UI.view==='tools'?'Notes & tasks':UI.view==='welcome'?'Welcome':UI.cid?'Community':'Friends'}</b></div>`;
+  const mem=UI.cid&&UI.view==='chat'?`<button class="icon-btn ${UI.membersOpen?'on':''}" data-act="toggle-members" aria-label="Toggle member list" title="Members (Alt+M)">${ic('users')}</button>`:'';
+  $('#topbar').innerHTML=hamb+left+mid+bell+search+mem;
+}
+
+function skeleton(){return `<div style="padding:1.2rem;display:grid;gap:1rem">${Array.from({length:6},(_,i)=>`<div class="row"><div class="skel" style="width:2.5rem;height:2.5rem;border-radius:50%"></div><div style="flex:1;display:grid;gap:.4rem"><div class="skel" style="height:.8rem;width:${25+i*7}%"></div><div class="skel" style="height:.8rem;width:${70-i*6}%"></div></div></div>`).join('')}</div>`;}
+function errorState(e){console.error(e);$('#content').innerHTML=`<div class="err-card empty"><div class="big">${ic('x')}</div><h3>Something went wrong</h3><p>${esc(e&&e.message||'Unknown error')}</p><div class="acts"><button class="btn primary" data-act="reload-view">Try again</button><button class="btn" data-act="reset-data">Reset demo data</button></div></div>`;}
+function renderContent(){
+  if(!D)return;
+  const el=$('#content');
+  if(UI.loading){el.innerHTML=skeleton();return;}
+  try{
+    if(UI.cid===null){
+      if(UI.view==='dm'&&UI.dmUser)return renderChatShell(`Message ${info(UI.dmUser).display}`,true);
+      if(UI.view==='tools')return renderTools();
+      if(UI.view==='welcome')return renderWelcome();
+      return renderFriends();
+    }
+    const c=C();if(!c){UI.cid=null;return renderWelcome();}
+    const ch=CH(c);
+    if(!ch){el.innerHTML=`<div class="empty"><div class="big">${ic('hash')}</div><h3>No channels yet</h3><p>Create the first channel in <b>${esc(c.name)}</b>.</p><div class="acts"><button class="btn primary" data-act="create-channel">${ic('plus')} Create channel</button></div></div>`;return;}
+    if(ch.type==='text')renderChatShell(`Message #${ch.name}`,false);else renderVoice(c,ch);
+  }catch(e){errorState(e);}
+}
+function renderWelcome(){
+  $('#content').innerHTML=`<div class="empty"><div class="big">${ic('home')}</div><h3>Welcome to NEXUS, ${esc(info(me).display)}</h3><p>${D.communities.length?'Pick a community from the left or':'You have not joined any communities yet. Create one,'} load the sample data, or find friends.</p><div class="acts"><button class="btn primary" data-act="create-community">${ic('plus')} Create community</button><button class="btn" data-act="load-sample">${ic('download')} Load sample communities</button><button class="btn" data-act="open-friends">${ic('users')} Friends</button></div></div>`;
+}
+function emptyMsgs(filtered){return `<div class="empty"><div class="big">${ic(filtered?'search':'msg')}</div><h3>${filtered?'No messages match':'Nothing here yet'}</h3><p>${filtered?'Try clearing the filter.':'Be the first to say something! Messages you send are saved in this browser only.'}</p>${filtered?`<div class="acts"><button class="btn" data-act="filter-clear">Clear filter</button></div>`:''}</div>`;}
+
+function renderChatShell(placeholder,isDm){
+  const cv=convo();if(!cv)return;
+  $('#content').innerHTML=`<div class="chat">
+   <div class="filterbar" ${UI.filter.open?'':'hidden'}><input id="filterq" type="search" placeholder="Filter messages in this conversation" aria-label="Filter messages" value="${esc(UI.filter.q)}"><select id="filtert" aria-label="Filter type">${[['all','All messages'],['mine','My messages'],['pinned','Pinned'],['links','With links'],['code','With code'],['reacts','With reactions'],['replies','Replies'],['mentions','Mentions of me']].map(([v,l])=>`<option value="${v}" ${UI.filter.type===v?'selected':''}>${l}</option>`).join('')}</select><button class="btn sm" data-act="filter-clear">Clear</button></div>
+   ${isDm?`<div class="notice" style="margin:.6rem 1rem 0">${ic('lock')} <b>Local demo:</b> messages are stored in this browser profile and are only visible to accounts created in this same browser. ${info(UI.dmUser).sample?'This is a <b>sample user</b>; replies are simulated locally.':''}</div>`:''}
+   <div id="msgs" class="msgs" tabindex="-1" aria-live="polite" aria-label="Messages"></div>
+   <div id="typing" class="typing"></div><div id="replybar"></div>
+   <form class="composer" data-form="send"><button type="button" class="icon-btn" data-act="emoji-composer" aria-label="Insert emoji">${ic('smile')}</button><textarea id="input" rows="1" maxlength="4000" placeholder="${esc(placeholder)}" aria-label="Message"></textarea><button class="send" aria-label="Send message" title="Send (Enter)">${ic('send')}</button></form>
+   <div class="kbd">Enter to send · Shift+Enter for new line · **bold** *italic* &#96;code&#96; &#96;&#96;&#96;block&#96;&#96;&#96; &gt; quote</div></div>`;
+  const ta=$('#input');ta.value=UI.drafts[cv.key]||'';autoGrow(ta);
+  renderMessages();renderTyping();renderReplyBar();
+  const b=$('#msgs');b.scrollTop=b.scrollHeight;
+}
+const autoGrow=ta=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,160)+'px';};
+function matchFilter(m,f){
+  if(f.q&&!(m.text.toLowerCase().includes(f.q.toLowerCase())||m.author.toLowerCase().includes(f.q.toLowerCase())))return false;
+  switch(f.type){case'mine':return m.author===me;case'pinned':return m.pinned;case'links':return /https?:\/\//.test(m.text);case'code':return m.text.includes('`');case'reacts':return Object.values(m.reactions||{}).some(a=>a.length);case'replies':return!!m.replyTo;case'mentions':return m.text.includes('@'+me);default:return true;}
+}
+function renderMessages(keepScroll){
+  const cv=convo(),box=$('#msgs');if(!cv||!box)return;
+  const nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<140;const f=UI.filter;
+  const list=cv.list.filter(m=>matchFilter(m,f));
+  if(!list.length){box.innerHTML=emptyMsgs(cv.list.length>0);return;}
+  let html='',prev=null;
+  for(const m of list){
+    const nd=!prev||dayKey(prev.ts)!==dayKey(m.ts);
+    if(nd)html+=`<div class="day"><span>${fmtDay(m.ts)}</span></div>`;
+    html+=msgHtml(m,!nd&&prev&&prev.author===m.author&&m.ts-prev.ts<300000&&!m.replyTo&&UI.editing!==m.id,cv);prev=m;
+  }
+  const st=box.scrollTop;box.innerHTML=html;
+  box.scrollTop=(!keepScroll&&nearBottom)?box.scrollHeight:st;
+  if(UI.editing){const t=$('.edit-ta',box);if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}}
+}
+function replyQuote(id,cv){
+  const o=cv.list.find(x=>x.id===id);
+  if(!o)return `<div class="quote">${ic('reply')}<span>Original message was deleted</span></div>`;
+  return `<div class="quote" data-act="jump" data-id="${esc(id)}" role="button" tabindex="0">${ic('reply')}<b>${esc(info(o.author).display)}</b><span>${esc(o.text.replace(/\s+/g,' ').slice(0,90))}</span></div>`;
+}
+function msgHtml(m,group,cv){
+  if(D.blocked.includes(m.author)&&!UI.revealed.has(m.id))return `<div class="msg blocked" data-id="${esc(m.id)}"><span>Message from a blocked user is hidden.</span> <button class="link" data-act="reveal" data-id="${esc(m.id)}">Show</button></div>`;
+  const i=info(m.author);
+  const reacts=Object.entries(m.reactions||{}).filter(([e,u])=>u.length).map(([e,u])=>`<button class="react ${u.includes(me)?'me':''}" data-act="react" data-id="${esc(m.id)}" data-emoji="${esc(e)}" title="${esc(u.join(', '))}" aria-label="${esc(e)} ${u.length}">${esc(e)} <span>${u.length}</span></button>`).join('');
+  const body=UI.editing===m.id?`<textarea class="edit-ta" data-edit="${esc(m.id)}" maxlength="4000" aria-label="Edit message">${esc(m.text)}</textarea><div class="edit-hint">Enter to save · Esc to cancel · <button class="link" data-act="save-edit">save</button> · <button class="link" data-act="cancel-edit">cancel</button></div>`:`<div class="txt">${md(m.text)}</div>`;
+  const mention=m.text.includes('@'+me)&&m.author!==me;
+  return `<article class="msg ${group?'grp':''} ${m.pinned?'pinned':''} ${mention?'mention-me':''}" data-id="${esc(m.id)}" data-ctx="message" tabindex="0">
+   <div class="gut">${group?`<time class="hov">${fmtTime(m.ts)}</time>`:av(m.author)}</div>
+   <div class="mb">${m.replyTo?replyQuote(m.replyTo,cv):''}${group?'':`<div class="mh"><b class="au" style="--h:${i.hue}">${esc(i.display)}</b>${i.sample?'<span class="tag">SAMPLE</span>':''}<time title="${esc(new Date(m.ts).toLocaleString())}">${fmtTime(m.ts)}</time>${m.edited?'<span class="ed">(edited)</span>':''}${m.pinned?ic('pin','pin-ic'):''}</div>`}${body}${reacts?`<div class="reacts">${reacts}</div>`:''}</div>
+   <div class="tools"><button class="icon-btn t-extra" data-act="react" data-id="${esc(m.id)}" data-emoji="👍" aria-label="React 👍">👍</button><button class="icon-btn t-extra" data-act="react-pick" data-id="${esc(m.id)}" aria-label="Add reaction">${ic('smile')}</button><button class="icon-btn t-extra" data-act="reply" data-id="${esc(m.id)}" aria-label="Reply">${ic('reply')}</button><button class="icon-btn" data-act="msg-menu" data-id="${esc(m.id)}" aria-label="More message actions">${ic('more')}</button></div></article>`;
+}
+function renderTyping(){const el=$('#typing'),cv=convo();if(!el||!cv)return;const t=UI.typing[cv.key]||[];el.innerHTML=t.length?`<i></i><i></i><i></i> <span>${esc(t.map(n=>info(n).display).join(', '))} ${t.length>1?'are':'is'} typing… <span class="tag">SAMPLE</span></span>`:'';}
+function renderReplyBar(){const el=$('#replybar'),cv=convo();if(!el||!cv)return;const o=UI.replyTo&&cv.list.find(m=>m.id===UI.replyTo);if(!o){UI.replyTo=null;el.innerHTML='';return;}el.innerHTML=`<div class="replybar">${ic('reply')}<span>Replying to <b>${esc(info(o.author).display)}</b>: ${esc(o.text.replace(/\s+/g,' ').slice(0,80))}</span><button class="icon-btn" data-act="cancel-reply" aria-label="Cancel reply">${ic('x')}</button></div>`;}
+
+/* Voice & video — UI PREVIEW ONLY (no WebRTC, no microphone or camera access) */
+function callControls(){const v=UI.voice;return `<div class="ctrls">
+ <button class="rbtn ${v.mic?'':'off'}" data-act="voice-toggle" data-k="mic" aria-pressed="${!v.mic}" aria-label="${v.mic?'Mute microphone':'Unmute microphone'}">${ic(v.mic?'mic':'micoff')}</button>
+ <button class="rbtn ${v.deaf?'off':''}" data-act="voice-toggle" data-k="deaf" aria-label="${v.deaf?'Undeafen':'Deafen'}">${ic(v.deaf?'ban':'volume')}</button>
+ <button class="rbtn ${v.cam?'act':''}" data-act="voice-toggle" data-k="cam" aria-label="${v.cam?'Turn camera off':'Turn camera on'}">${ic(v.cam?'video':'videooff')}</button>
+ <button class="rbtn ${v.screen?'act':''}" data-act="voice-toggle" data-k="screen" aria-label="${v.screen?'Stop screen share':'Share screen'}">${ic('monitor')}</button>
+ <button class="rbtn leave" data-act="voice-leave" aria-label="Leave call">${ic('phone')}</button></div>`;}
+const tile=(n,speaking,cam,label)=>`<div class="tile ${speaking?'sp':''}">${av(n,'xl')}<span class="nm">${esc(label||info(n).display)}</span>${cam?`<span class="cam">${ic('video')}</span>`:''}</div>`;
+function renderVoice(c,ch){
+  const v=UI.voice,joined=v.ch===ch.id;
+  const others=c.members.map(m=>m.name).filter(n=>n!==me&&SAMPLES[n]&&info(n).presence!=='offline').slice(0,3);
+  $('#content').innerHTML=`<div class="voice"><div class="notice warn">${ic('lock')} <b>UI preview only — requires backend services.</b> Real voice/video needs WebRTC plus a signaling server (and usually TURN/SFU infrastructure). This page never accesses your microphone or camera, and the participants below are simulated sample users.</div>
+   <div class="row"><h3 style="font-size:1.2rem">${ic(ch.type==='video'?'video':'volume')} ${esc(ch.name)}</h3><span class="tag warn">PREVIEW</span></div><p class="note">${esc(ch.desc)}</p>
+   <div class="tiles">${others.map((n,i)=>tile(n,i===0&&joined,false)).join('')}${joined?tile(me,false,v.cam,'You'+(v.mic?'':' (muted)')):''}</div>
+   ${joined?callControls():`<div class="ctrls"><button class="btn primary" data-act="voice-join" data-id="${esc(ch.id)}">${ic('phone')} Join preview</button></div>`}
+   ${joined&&v.screen?`<div class="notice">${ic('monitor')} Screen sharing is shown as active in this preview only. Nothing is captured or sent.</div>`:''}</div>`;
+}
+
+function renderMembers(){
+  const el=$('#members'),app=$('#app'),c=C();
+  const show=!!c&&UI.view==='chat';
+  app.classList.toggle('members-off',!show||!UI.membersOpen);
+  if(!show){el.innerHTML='';return;}
+  const on=[],off=[];c.members.forEach(m=>(info(m.name).presence==='offline'?off:on).push(m));
+  const row=(m,o)=>{const i=info(m.name),r=c.roles.find(x=>x.id===m.role);return `<button class="mem ${o?'off':''}" data-act="view-user" data-user="${esc(m.name)}" data-ctx="member">${av(m.name,'',true)}<span class="mn"><b style="color:${esc(r?r.color:'inherit')}">${esc(i.display)}${i.sample?' <span class="tag">SAMPLE</span>':''}</b><small>${esc(i.status||presLabel(i.presence))}</small></span></button>`;};
+  let h=`<div class="mem-h">Members — ${c.members.length}</div>`;
+  for(const r of c.roles){const ms=on.filter(m=>m.role===r.id||(!c.roles.some(x=>x.id===m.role)&&r.id==='member'));if(ms.length)h+=`<div class="mem-h">${esc(r.name)} — ${ms.length}</div>`+ms.map(m=>row(m,false)).join('');}
+  if(off.length)h+=`<div class="mem-h">Offline — ${off.length}</div>`+off.map(m=>row(m,true)).join('');
+  el.innerHTML=h+`<p class="note" style="padding:.6rem .5rem">Local demo membership. Invitations don’t reach anyone without a backend.</p>`;
+}
+
+/* Friends */
+function renderFriends(){
+  $('#content').innerHTML=`<div class="page"><div class="page-h"><h2>${ic('users')} Friends</h2><div class="tabs sm">${['all','online','blocked'].map(t=>`<button class="${UI.ftab===t?'on':''}" data-act="ftab" data-tab="${t}">${cap(t)}</button>`).join('')}</div></div>
+  <form class="inline-form" data-form="addFriend"><input name="username" placeholder="Add friend by username" maxlength="20" aria-label="Friend username"><button class="btn primary">${ic('userplus')} Add</button></form><div class="err" role="alert"></div>
+  <input id="fq" class="search" type="search" placeholder="Search friends" aria-label="Search friends" value="${esc(UI.fq)}">
+  <div id="flist"></div>
+  <p class="note">Local demo: you can add the sample users (Aria, Kai, Mira, Orion, Zed) or other accounts registered in <b>this</b> browser. Friends are added instantly — real friend requests need a backend.</p>
+  <h3>Recent conversations</h3><div id="recent"></div></div>`;
+  renderFriendList();
+}
+function renderFriendList(){
+  const el=$('#flist');if(!el)return;const q=UI.fq.trim().toLowerCase();
+  let names=UI.ftab==='blocked'?D.blocked:D.friends;
+  if(UI.ftab==='online')names=names.filter(n=>info(n).presence!=='offline');
+  names=names.filter(n=>!q||n.toLowerCase().includes(q)||info(n).display.toLowerCase().includes(q));
+  el.innerHTML=names.length?names.map(n=>{const i=info(n);return `<div class="list-row">${av(n,'',true)}<div class="grow"><b>${esc(i.display)}</b> ${i.sample?'<span class="tag">SAMPLE</span>':i.local?'<span class="tag warn">LOCAL</span>':''}<small>${esc(i.status||presLabel(i.presence))}</small></div><div class="acts">${UI.ftab==='blocked'?`<button class="btn sm" data-act="friend-unblock" data-user="${esc(n)}">Unblock</button>`:`<button class="btn sm primary" data-act="open-dm" data-user="${esc(n)}">${ic('msg')} Message</button><button class="icon-btn" data-act="view-user" data-user="${esc(n)}" aria-label="Profile of ${esc(n)}" title="Profile">${ic('user')}</button><button class="icon-btn" data-act="friend-block" data-user="${esc(n)}" aria-label="Block ${esc(n)}" title="Block">${ic('ban')}</button><button class="icon-btn" data-act="friend-remove" data-user="${esc(n)}" aria-label="Remove ${esc(n)}" title="Remove friend">${ic('trash')}</button>`}</div></div>`;}).join(''):`<div class="empty"><div class="big">${ic('users')}</div><h3>${UI.ftab==='blocked'?'No blocked users':q?'No matches':'No friends here yet'}</h3><p>${UI.ftab==='blocked'?'People you block will appear here.':'Add a friend by username above.'}</p></div>`;
+  const rec=$('#recent');if(rec){const p=dmPartners();rec.innerHTML=p.length?p.map(x=>`<div class="list-row">${av(x.other,'',true)}<div class="grow"><b>${esc(info(x.other).display)}</b><small>${esc(x.last.text.replace(/\s+/g,' ').slice(0,70))}</small></div><button class="btn sm" data-act="open-dm" data-user="${esc(x.other)}">Open</button></div>`).join(''):`<p class="note">No conversations yet.</p>`;}
+}
+
+/* Productivity tools */
+function renderTools(){
+  const t=UI.tools;
+  const tabs=[['notes','note','Notes'],['tasks','tasks','To-do'],['bookmarks','bookmark','Bookmarks'],['reminders','clock','Reminders']];
+  let body='';
+  if(t==='notes')body=`<label for="notes">Personal notes <small>(autosaved locally)</small></label><textarea id="notes" class="notes-ta" maxlength="20000" placeholder="Write anything… only you can see this (on this browser).">${esc(D.notes)}</textarea>`;
+  if(t==='tasks'){
+    const f=UI.tasksFilter,ts=D.tasks.filter(x=>f==='all'||(f==='open'?!x.done:x.done));
+    body=`<form class="inline-form" data-form="addTask"><input name="text" placeholder="Add a task" maxlength="200" aria-label="Task"><button class="btn primary">${ic('plus')} Add</button></form><div class="err" role="alert"></div>
+    <div class="tabs sm" style="width:fit-content">${['all','open','done'].map(x=>`<button class="${f===x?'on':''}" data-act="task-filter" data-f="${x}">${cap(x)}</button>`).join('')}</div>
+    ${ts.length?ts.map(x=>`<div class="list-row ${x.done?'done':''}"><input type="checkbox" ${x.done?'checked':''} data-change="task-toggle" data-id="${esc(x.id)}" aria-label="Complete ${esc(x.text)}" style="width:1.2rem;height:1.2rem;accent-color:var(--acc)"><div class="grow"><b>${esc(x.text)}</b></div><button class="icon-btn" data-act="task-del" data-id="${esc(x.id)}" aria-label="Delete task">${ic('trash')}</button></div>`).join(''):`<div class="empty"><div class="big">${ic('tasks')}</div><h3>No tasks</h3><p>Add something to get started.</p></div>`}
+    ${D.tasks.some(x=>x.done)?`<button class="btn sm" data-act="task-clear" style="margin-top:.6rem">Clear completed</button>`:''}`;
+  }
+  if(t==='bookmarks')body=`<form class="inline-form" data-form="addBookmark"><input name="title" placeholder="Title" maxlength="120" aria-label="Bookmark title"><input name="url" placeholder="https://… (optional link)" maxlength="500" aria-label="Bookmark link"><button class="btn primary">${ic('plus')} Add</button></form><div class="err" role="alert"></div>
+    ${D.bookmarks.length?D.bookmarks.map(b=>`<div class="list-row">${ic(b.type==='msg'?'msg':'link')}<div class="grow"><b>${esc(b.title||(b.type==='msg'?'Saved message':'Bookmark'))}</b><small>${b.type==='msg'?esc((b.author?b.author+': ':'')+b.text):esc(b.url)}</small></div><div class="acts">${b.type==='msg'&&b.target?`<button class="btn sm" data-act="go-link" data-target='${esc(JSON.stringify(b.target))}'>Jump</button>`:''}${b.type==='link'&&/^https?:\/\//i.test(b.url)?`<a class="btn sm" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer nofollow">Open</a>`:''}<button class="icon-btn" data-act="bm-del" data-id="${esc(b.id)}" aria-label="Remove bookmark">${ic('trash')}</button></div></div>`).join(''):`<div class="empty"><div class="big">${ic('bookmark')}</div><h3>No bookmarks</h3><p>Save messages from their ⋯ menu, or add a link above.</p></div>`}`;
+  if(t==='reminders')body=`<form class="inline-form" data-form="addReminder"><input name="text" placeholder="Remind me to…" maxlength="200" aria-label="Reminder text"><input name="at" type="datetime-local" aria-label="Reminder time" style="max-width:14rem"><button class="btn primary">${ic('plus')} Add</button></form><div class="err" role="alert"></div>
+    <p class="note">Reminders fire as in-app notifications while NEXUS is open in this browser (no push notifications without a backend).</p>
+    ${D.reminders.length?[...D.reminders].sort((a,b)=>a.at-b.at).map(r=>`<div class="list-row ${r.done?'done':''}">${ic('clock')}<div class="grow"><b>${esc(r.text)}</b><small>${new Date(r.at).toLocaleString()}${r.done?' · done':r.at<Date.now()?' · due':''}</small></div><button class="icon-btn" data-act="rem-del" data-id="${esc(r.id)}" aria-label="Delete reminder">${ic('trash')}</button></div>`).join(''):`<div class="empty"><div class="big">${ic('clock')}</div><h3>No reminders</h3><p>Pick a time above.</p></div>`}`;
+  $('#content').innerHTML=`<div class="page"><div class="page-h"><h2>${ic('note')} Notes &amp; tasks</h2></div><div class="tabs" style="margin-bottom:1rem">${tabs.map(([k,i,l])=>`<button class="${t===k?'on':''}" data-act="tools-tab" data-tab="${k}">${l}</button>`).join('')}</div>${body}</div>`;
+}
+
+/* ---------- 6. MESSAGING & SIMULATION ---------- */
+function automod(c,text){
+  if(!c||!c.mod)return '';
+  if(c.mod.blockLinks&&/https?:\/\//i.test(text))return 'Blocked by AutoMod: links are not allowed in this community.';
+  const w=c.mod.words.find(x=>x&&text.toLowerCase().includes(x.toLowerCase()));
+  return w?'Blocked by AutoMod: your message contains a blocked word.':'';
+}
+function sendMessage(){
+  const ta=$('#input'),cv=convo();if(!ta||!cv)return;
+  const text=ta.value.replace(/\u0000/g,'').trim();if(!text)return;
+  if(text.length>4000)return toast('Message is too long (max 4000 characters).','error');
+  if(cv.kind==='dm'&&D.blocked.includes(UI.dmUser))return toast('Unblock this user to message them.','warn');
+  if(cv.kind==='ch'){const r=automod(C(),text);if(r)return toast(r,'error');}
+  const m={id:uid('m'),author:me,text,ts:Date.now(),edited:false,replyTo:UI.replyTo,reactions:{},pinned:false};
+  if(cv.kind==='dm')m.to=UI.dmUser;
+  cv.list.push(m);if(cv.list.length>500)cv.list.splice(0,cv.list.length-500);cv.persist();
+  UI.replyTo=null;UI.drafts[cv.key]='';ta.value='';autoGrow(ta);renderReplyBar();renderMessages();
+  const b=$('#msgs');b.scrollTop=b.scrollHeight;
+  if(cv.kind==='dm'){markDmRead();renderSidebar();}
+  simulateReply(cv,m);
+}
+const pickReply=(text,who)=>{const t=text.includes('?')?rand(ANSWERS):rand(GENERIC);return Math.random()<.25?`@${me} ${t}`:t;};
+function simulateReply(cv,m){
+  if(!D.settings.notif.simulate)return;
+  let pool;
+  if(cv.kind==='dm'){if(!SAMPLES[UI.dmUser]||info(UI.dmUser).presence==='offline')return;pool=[UI.dmUser];}
+  else{const c=C();pool=c.members.map(x=>x.name).filter(n=>SAMPLES[n]&&!D.blocked.includes(n)&&info(n).presence!=='offline');if(!pool.length||Math.random()>.65)return;}
+  const who=rand(pool),key=cv.key;
+  (UI.typing[key]=UI.typing[key]||[]).push(who);renderTyping();
+  setTimeout(()=>{
+    UI.typing[key]=(UI.typing[key]||[]).filter(n=>n!==who);
+    if(!D||!me)return;
+    const r={id:uid('m'),author:who,text:key.startsWith('dm:')?pickReply(m.text,who).replace('@'+me+' ',''):pickReply(m.text,who),ts:Date.now(),edited:false,replyTo:null,reactions:{},pinned:false};
+    if(key.startsWith('dm:'))r.to=me;
+    deliver(key,r);renderTyping();
+  },1400+Math.random()*1800);
+}
+/* Add a (simulated) incoming message to a conversation and update unread/notifications. */
+function deliver(key,msg){
+  const isDm=key.startsWith('dm:');
+  let loc=null;if(!isDm){loc=findChannel(key);if(!loc)return;}
+  const list=listFor(key);list.push(msg);if(list.length>500)list.splice(0,list.length-500);persistFor(key);
+  const cv=convo();
+  if(cv&&cv.key===key){renderMessages();const b=$('#msgs');if(b)b.scrollTop=b.scrollHeight;if(isDm)markDmRead();}
+  else if(isDm)syncDmNotifs();
+  else{
+    D.unread[key]=(D.unread[key]||0)+1;
+    if(msg.text.includes('@'+me))notify(`${info(msg.author).display} mentioned you in #${loc.ch.name} (${loc.c.name})`,{cid:loc.c.id,chid:key,msgId:msg.id},'mention');
+  }
+  renderRail();renderSidebar();renderTopbar();
+}
+function syncDmNotifs(){
+  for(const p of dmPartners()){
+    const k=pair(me,p.other),last=Math.max(D.dmRead[k]||0,D.dmNotified[k]||0);
+    const fresh=(DM[k]||[]).filter(m=>m.to===me&&m.ts>last);
+    if(fresh.length){D.dmNotified[k]=fresh[fresh.length-1].ts;notify(`${fresh.length} new message${fresh.length>1?'s':''} from ${info(p.other).display}`,{dm:p.other,msgId:fresh[0].id},'dm');}
+  }
+}
+function notify(text,target,type='system'){
+  if(type==='mention'&&!D.settings.notif.mentions)return;
+  D.notifications.unshift({id:uid('n'),text,ts:Date.now(),read:false,target:target||null,type});
+  if(D.notifications.length>100)D.notifications.length=100;saveSoon();
+  if(D.settings.notif.toasts)toast(text,'info');
+  if(D.settings.notif.sound)beep();
+  renderTopbar();
+}
+let actx=null;
+function beep(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=720;g.gain.value=.04;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+.12);}catch(e){}}
+function simActivity(){
+  if(!D||!D.settings.notif.simulate||document.hidden)return;
+  const cs=D.communities.filter(c=>c.sample&&c.channels.some(x=>x.type==='text'));if(!cs.length)return;
+  const c=rand(cs),ch=rand(c.channels.filter(x=>x.type==='text')),au=c.members.map(m=>m.name).filter(n=>SAMPLES[n]&&!D.blocked.includes(n));if(!au.length)return;
+  const who=rand(au),men=Math.random()<.3;
+  deliver(ch.id,{id:uid('m'),author:who,text:(men?`@${me} `:'')+rand(SIM_LINES),ts:Date.now(),edited:false,replyTo:null,reactions:{},pinned:false});
+}
+function checkReminders(){
+  if(!D)return;let ch=false;
+  D.reminders.forEach(r=>{if(!r.done&&r.at<=Date.now()){r.done=true;ch=true;notify('Reminder: '+r.text,null,'reminder');toast('⏰ Reminder: '+r.text,'warn',6000);}});
+  if(ch){saveSoon();if(UI.view==='tools'&&UI.tools==='reminders'&&!UI.cid)renderTools();}
+}
+const shufflePresence=()=>{for(const n in SAMPLES){if(Math.random()<.25)SIMP[n]=rand(['online','online','idle','dnd','offline']);}if(D){renderMembers();if(!UI.cid)renderSidebar();}};
+
+/* Message operations */
+const msgById=id=>{const cv=convo();return cv?cv.list.find(m=>m.id===id):null;};
+function toggleReaction(id,emoji){const m=msgById(id);if(!m)return;m.reactions=m.reactions||{};const u=m.reactions[emoji]=m.reactions[emoji]||[];const i=u.indexOf(me);if(i>=0)u.splice(i,1);else u.push(me);if(!u.length)delete m.reactions[emoji];convo().persist();renderMessages(true);}
+function togglePin(id){const m=msgById(id);if(!m)return;m.pinned=!m.pinned;convo().persist();renderMessages(true);toast(m.pinned?'Message pinned':'Message unpinned','ok');if(modalState)refreshModal();}
+function startEdit(id){const m=msgById(id);if(!m||m.author!==me)return;UI.editing=id;renderMessages(true);}
+function saveEdit(){const id=UI.editing,t=$('.edit-ta');if(!id||!t)return;const text=t.value.trim();if(!text){toast('A message can’t be empty. Delete it instead.','warn');return;}const m=msgById(id);if(m&&m.text!==text){m.text=text;m.edited=true;convo().persist();}UI.editing=null;renderMessages(true);}
+async function deleteMessage(id){
+  const m=msgById(id);if(!m)return;
+  if(!(await confirmDlg({title:'Delete message?',msg:'This cannot be undone.',ok:'Delete',danger:true})))return;
+  const cv=convo();const i=cv.list.findIndex(x=>x.id===id);if(i<0)return;
+  if(m.author!==me&&UI.cid){const c=C();c.modlog.unshift({id:uid('l'),text:`Deleted a message by ${m.author}`,by:me,ts:Date.now()});}
+  cv.list.splice(i,1);cv.persist();renderMessages(true);toast('Message deleted','ok');
+}
+function bookmarkMessage(id){
+  const m=msgById(id);if(!m)return;const cv=convo();
+  const target=cv.kind==='dm'?{dm:UI.dmUser,msgId:id}:{cid:UI.cid,chid:UI.chid,msgId:id};
+  if(D.bookmarks.some(b=>b.target&&b.target.msgId===id))return toast('Already bookmarked','warn');
+  D.bookmarks.unshift({id:uid('b'),type:'msg',title:'',url:'',text:m.text.slice(0,200),author:m.author,ts:Date.now(),target});saveSoon();toast('Saved to Bookmarks','ok');
+}
+async function copyText(t){try{await navigator.clipboard.writeText(t);toast('Copied to clipboard','ok');}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copied to clipboard','ok');}catch(_){toast('Copy failed — select the text manually.','error');}ta.remove();}}
+
+/* ---------- 7. OVERLAYS ---------- */
+function toast(msg,type='info',ms=3400){
+  const t=document.createElement('div');t.className='toast '+type;t.setAttribute('role',type==='error'?'alert':'status');t.textContent=msg;
+  const box=$('#toasts');box.appendChild(t);while(box.children.length>4)box.firstChild.remove();
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},ms);
+}
+let modalState=null;
+function openModal({title,render,wide=false,onMount}){
+  closeModal(true);const root=$('#modal-root');root.hidden=false;
+  root.innerHTML=`<div class="modal-back" data-act="modal-back"><div class="modal ${wide?'wide':''}" role="dialog" aria-modal="true" aria-labelledby="mt"><header><h3 id="mt">${esc(title)}</h3><button class="icon-btn" data-act="modal-close" aria-label="Close dialog">${ic('x')}</button></header><div class="mbody"></div></div></div>`;
+  modalState={render,onMount,prev:document.activeElement};refreshModal();
+  const b=$('#modal-root .mbody');(b.querySelector('input:not([type=checkbox]),textarea,select')||$('#modal-root [data-act=modal-close]')).focus();
+}
+function refreshModal(){if(!modalState)return;const b=$('#modal-root .mbody');if(!b)return;const st=b.scrollTop;b.innerHTML=modalState.render();b.scrollTop=st;if(modalState.onMount)modalState.onMount(b);}
+function closeModal(silent){const root=$('#modal-root');if(!modalState&&root.hidden)return;root.hidden=true;root.innerHTML='';const p=modalState&&modalState.prev;modalState=null;if(!silent&&p&&p.focus&&document.contains(p))p.focus();}
+function confirmDlg({title,msg,ok='Confirm',danger=false}){
+  return new Promise(res=>{
+    const root=$('#confirm-root');root.hidden=false;const prev=document.activeElement;
+    root.innerHTML=`<div class="modal-back"><div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="ct"><header><h3 id="ct">${esc(title)}</h3></header><div class="mbody"><p>${esc(msg)}</p><div class="mfoot"><button class="btn" data-c="0">Cancel</button><button class="btn ${danger?'danger':'primary'}" data-c="1">${esc(ok)}</button></div></div></div></div>`;
+    const done=v=>{root.hidden=true;root.innerHTML='';if(prev&&prev.focus&&document.contains(prev))prev.focus();res(v);};
+    root.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>done(b.dataset.c==='1')));
+    root._cancel=()=>done(false);root.querySelector('[data-c="0"]').focus();
+  });
+}
+function closeTransient(){const c=$('#ctx'),p=$('#popover');c.hidden=true;p.hidden=true;c.innerHTML='';}
+function showMenu(x,y,items){
+  const m=$('#ctx');closeTransient();
+  m.innerHTML=items.map((it,i)=>it==='-'?'<hr>':`<button role="menuitem" data-mi="${i}" class="${it.danger?'danger':''}">${it.icon?ic(it.icon):''}${esc(it.label)}</button>`).join('');
+  m.hidden=false;m._items=items;
+  const r=m.getBoundingClientRect();m.style.left=Math.max(6,Math.min(x,innerWidth-r.width-6))+'px';m.style.top=Math.max(6,Math.min(y,innerHeight-r.height-6))+'px';
+  const f=m.querySelector('button');if(f)f.focus();
+}
+function menuAt(el,items){const r=el.getBoundingClientRect();showMenu(r.left,r.bottom+4,items);}
+function showPopover(anchor,html){
+  const p=$('#popover');closeTransient();p.innerHTML=html;p.hidden=false;
+  const a=anchor.getBoundingClientRect(),r=p.getBoundingClientRect();
+  p.style.left=Math.max(6,Math.min(a.left,innerWidth-r.width-6))+'px';
+  p.style.top=(a.bottom+r.height+10>innerHeight?Math.max(6,a.top-r.height-6):a.bottom+6)+'px';
+}
+const EMOJI={'Smileys':'😀 😃 😄 😁 😆 😅 😂 🤣 😊 😇 🙂 😉 😍 🥰 😘 😋 😜 🤪 😎 🤩 🥳 😏 😒 😔 😢 😭 😤 😡 🤯 😱 🤔 🤗 🙄 😴 🤒 🥵 🥶','Gestures':'👍 👎 👏 🙌 🙏 💪 👋 🤝 ✌️ 🤞 👌 🤙 👀 🧠 🫡 🤌','Symbols':'❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 💖 ✨ 🔥 💯 ⭐ 🎉 ✅ ❌ ⚡ ❓ ❗ 💬','Things':'🚀 💡 🎮 🎧 📌 📎 💻 📱 ☕ 🍕 🍔 🍿 🎂 🏆 🎯 🔔 🌈 🌙 ☀️ 🌸 🐱 🐶 🦄 🦉'};
+let emojiCb=null,emojiTab='Smileys';
+function emojiHtml(){return `<div class="emo-tabs" role="tablist">${Object.keys(EMOJI).map(k=>`<button class="${k===emojiTab?'on':''}" data-act="emoji-tab" data-tab="${k}">${k}</button>`).join('')}</div><div class="emo-grid">${EMOJI[emojiTab].split(' ').map(e=>`<button data-act="emoji-pick" data-emoji="${e}" aria-label="${e}">${e}</button>`).join('')}</div>`;}
+function openEmoji(anchor,cb){emojiCb=cb;showPopover(anchor,emojiHtml());}
+function notifHtml(){
+  const n=D.notifications;
+  return `<div class="pop-h"><span>Notifications</span><span><button class="btn sm" data-act="notif-readall">Mark all read</button> <button class="btn sm" data-act="notif-clear">Clear all</button></span></div>`+
+  (n.length?n.slice(0,30).map(x=>`<div class="notif ${x.read?'':'unread'}"><span class="dot" ${x.read?'style="visibility:hidden"':''}></span><button style="flex:1;text-align:left" data-act="notif-open" data-id="${esc(x.id)}">${esc(x.text)}<small>${new Date(x.ts).toLocaleString()}</small></button>${x.read?'':`<button class="icon-btn" data-act="notif-read" data-id="${esc(x.id)}" aria-label="Mark as read" style="width:1.8rem;height:1.8rem">${ic('check')}</button>`}</div>`).join(''):`<div class="empty" style="padding:1rem"><div class="big" style="width:3rem;height:3rem">${ic('bell')}</div><p>You’re all caught up.</p></div>`);
+}
+
+/* Context menus */
+function msgMenuItems(id){
+  const m=msgById(id);if(!m)return[];const cv=convo();
+  const del=m.author===me||(cv.kind==='ch'&&can('manageMessages'));
+  return[{label:'Reply',icon:'reply',onClick:()=>startReply(id)},{label:'Add reaction',icon:'smile',onClick:()=>{const el=$(`#msgs [data-id="${CSS.escape(id)}"] .tools`)||$('#msgs');openEmoji(el,e=>toggleReaction(id,e));}},
+    ...(m.author===me?[{label:'Edit message',icon:'edit',onClick:()=>startEdit(id)}]:[]),
+    {label:m.pinned?'Unpin message':'Pin message',icon:'pin',onClick:()=>togglePin(id)},{label:'Copy text',icon:'copy',onClick:()=>copyText(m.text)},{label:'Bookmark',icon:'bookmark',onClick:()=>bookmarkMessage(id)},
+    ...(del?['-',{label:'Delete message',icon:'trash',danger:true,onClick:()=>deleteMessage(id)}]:[])];
+}
+function channelMenuItems(id){
+  const c=C(),ch=c&&c.channels.find(x=>x.id===id);if(!ch)return[];
+  return[{label:'Open',icon:'hash',onClick:()=>openChannel(id)},{label:ch.fav?'Remove from favorites':'Mark as favorite',icon:'star',onClick:()=>{ch.fav=!ch.fav;saveSoon();renderSidebar();}},{label:ch.pinned?'Unpin channel':'Pin channel',icon:'pin',onClick:()=>{ch.pinned=!ch.pinned;saveSoon();renderSidebar();}},
+    {label:'Rename / description…',icon:'edit',onClick:()=>need('manageChannels')&&editChannelModal(id)},'-',{label:'Delete channel',icon:'trash',danger:true,onClick:()=>need('manageChannels')&&deleteChannel(id)}];
+}
+function communityMenuItems(id){
+  const c=D.communities.find(x=>x.id===id);if(!c)return[];
+  const sw=()=>{if(UI.cid!==id)openCommunity(id);};
+  return[{label:'Community tools',icon:'shield',onClick:()=>{sw();setTimeout(()=>communityTools('announce'),UI.cid===id?0:260);}},{label:'Community settings',icon:'settings',onClick:()=>{sw();setTimeout(()=>communityTools('settings'),UI.cid===id?0:260);}},
+    {label:'Create channel',icon:'plus',onClick:()=>{sw();setTimeout(()=>need('manageChannels')&&channelModal(),UI.cid===id?0:260);}},{label:'Create category',icon:'plus',onClick:()=>{sw();setTimeout(()=>need('manageChannels')&&categoryModal(),UI.cid===id?0:260);}},
+    {label:'Mark all as read',icon:'check',onClick:()=>{c.channels.forEach(ch=>delete D.unread[ch.id]);saveSoon();renderRail();renderSidebar();}},
+    '-',{label:c.owner===me?'Delete community':'Leave community',icon:'trash',danger:true,onClick:()=>removeCommunity(id)}];
+}
+function categoryMenuItems(id){return[{label:'Rename category…',icon:'edit',onClick:()=>need('manageChannels')&&categoryModal(id)},{label:'Add channel here',icon:'plus',onClick:()=>need('manageChannels')&&channelModal(id)},'-',{label:'Delete category',icon:'trash',danger:true,onClick:()=>need('manageChannels')&&deleteCategory(id)}];}
+function memberMenuItems(name){
+  const c=C();const items=[{label:'View profile',icon:'user',onClick:()=>viewUser(name)}];
+  if(name!==me){items.push({label:'Message',icon:'msg',onClick:()=>openDM(name)});
+    if(c&&can('kick')&&name!==c.owner)items.push('-',{label:'Kick from community',icon:'ban',danger:true,onClick:()=>memberAction('kick',name)});
+    if(c&&can('ban')&&name!==c.owner)items.push({label:'Ban from community',icon:'ban',danger:true,onClick:()=>memberAction('ban',name)});}
+  return items;
+}
+function ctxItemsFor(el){
+  const t=el.closest('[data-ctx]');if(!t)return null;const k=t.dataset.ctx;
+  if(k==='message')return msgMenuItems(t.dataset.id);
+  if(k==='channel')return channelMenuItems(t.dataset.id);
+  if(k==='community')return communityMenuItems(t.dataset.id);
+  if(k==='category')return categoryMenuItems(t.dataset.id);
+  if(k==='member')return memberMenuItems(t.dataset.user);
+  return null;
+}
+function startReply(id){UI.replyTo=id;renderReplyBar();const t=$('#input');if(t)t.focus();}
+
+/* Search */
+function searchHtml(){
+  const q=UI.gq.trim().toLowerCase(),s=UI.gscope;
+  if(!q)return `<div class="empty" style="padding:1.2rem"><div class="big">${ic('search')}</div><p>Search messages, channels, communities and users available in this local demo.</p></div>`;
+  let h='';const sec=(t,rows)=>rows.length?`<h3 style="margin:1rem 0 .3rem;font-size:.8rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em">${t}</h3>${rows.join('')}`:'';
+  const hl=t=>esc(t.replace(/\s+/g,' ').slice(0,110));
+  if(s==='all'||s==='messages'){
+    const rows=[];
+    for(const c of D.communities)for(const ch of c.channels)for(const m of (D.messages[ch.id]||[]))if(m.text.toLowerCase().includes(q)&&rows.length<30)rows.push(`<button class="list-row" style="width:100%;text-align:left" data-act="go-link" data-target='${esc(JSON.stringify({cid:c.id,chid:ch.id,msgId:m.id}))}'>${av(m.author,'sm')}<div class="grow"><b>${esc(info(m.author).display)}</b> <small style="display:inline">#${esc(ch.name)} · ${esc(c.name)}</small><small>${hl(m.text)}</small></div></button>`);
+    for(const p of dmPartners())for(const m of DM[pair(me,p.other)]||[])if(m.text.toLowerCase().includes(q)&&rows.length<30)rows.push(`<button class="list-row" style="width:100%;text-align:left" data-act="go-link" data-target='${esc(JSON.stringify({dm:p.other,msgId:m.id}))}'>${av(m.author,'sm')}<div class="grow"><b>${esc(info(m.author).display)}</b> <small style="display:inline">DM with ${esc(info(p.other).display)}</small><small>${hl(m.text)}</small></div></button>`);
+    h+=sec('Messages',rows);
+  }
+  if(s==='all'||s==='channels'){const rows=[];for(const c of D.communities)for(const ch of c.channels)if(ch.name.toLowerCase().includes(q)||ch.desc.toLowerCase().includes(q))rows.push(`<button class="list-row" style="width:100%;text-align:left" data-act="go-link" data-target='${esc(JSON.stringify({cid:c.id,chid:ch.id}))}'>${ic(ch.type==='text'?'hash':ch.type==='voice'?'volume':'video')}<div class="grow"><b>${esc(ch.name)}</b><small>${esc(c.name)} · ${esc(ch.desc)}</small></div></button>`);h+=sec('Channels',rows);}
+  if(s==='all'||s==='communities'){h+=sec('Communities',D.communities.filter(c=>c.name.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q)).map(c=>`<button class="list-row" style="width:100%;text-align:left" data-act="go-community" data-id="${esc(c.id)}"><span class="av sm">${esc(c.icon||c.name.charAt(0))}</span><div class="grow"><b>${esc(c.name)}</b><small>${c.members.length} members · ${esc(c.desc)}</small></div></button>`));}
+  if(s==='all'||s==='users'){const names=new Set([...Object.keys(SAMPLES),...Object.keys(ACCTS)]);names.delete(me);h+=sec('Users (local demo)',[...names].filter(n=>n.toLowerCase().includes(q)).map(n=>`<button class="list-row" style="width:100%;text-align:left" data-act="view-user" data-user="${esc(n)}">${av(n,'sm',true)}<div class="grow"><b>${esc(info(n).display)}</b><small>${info(n).sample?'Sample user':'Local account'} · ${presLabel(info(n).presence)}</small></div></button>`));}
+  return h||`<div class="empty" style="padding:1.2rem"><div class="big">${ic('search')}</div><h3>No results</h3><p>Nothing matched “${esc(UI.gq)}”.</p></div>`;
+}
+function openSearch(){
+  UI.gq='';UI.gscope='all';
+  openModal({title:'Search',wide:true,render:()=>`<input id="gsearch" type="search" placeholder="Search everything…" aria-label="Search" autocomplete="off"><div class="tabs sm" style="margin-top:.6rem;width:fit-content">${['all','messages','channels','communities','users'].map(s=>`<button class="${UI.gscope===s?'on':''}" data-act="search-scope" data-s="${s}">${cap(s)}</button>`).join('')}</div><div id="gres">${searchHtml()}</div>`,onMount:b=>{const i=$('#gsearch',b);i.value=UI.gq;}});
+}
+
+/* Profiles */
+function viewUser(name){
+  closeTransient();
+  openModal({title:'Profile',render:()=>{
+    const i=info(name),isMe=name===me,fr=D.friends.includes(name),bl=D.blocked.includes(name);
+    return `<div style="text-align:center">${av(name,'xl',true)}<h3 style="margin-top:.6rem">${esc(i.display)} ${i.sample?'<span class="tag">SAMPLE</span>':i.local?'<span class="tag warn">LOCAL DEMO USER</span>':''}</h3><div class="note">@${esc(i.name)} · ${esc(presLabel(i.presence))}</div></div>
+    ${i.status?`<p style="margin:.8rem 0"><b>Status:</b> ${esc(i.status)}</p>`:''}${i.bio?`<p style="margin:.4rem 0">${esc(i.bio)}</p>`:''}
+    ${i.sample?`<div class="notice" style="margin:.8rem 0">This is a fictional sample user simulated in your browser. Replies are canned/auto-generated.</div>`:''}
+    <div class="mfoot" style="justify-content:center;flex-wrap:wrap">${isMe?`<button class="btn primary" data-act="open-settings-tab" data-tab="profile">${ic('edit')} Edit profile</button>`:`<button class="btn primary" data-act="open-dm" data-user="${esc(name)}">${ic('msg')} Message</button><button class="btn" data-act="${fr?'friend-remove':'friend-add'}" data-user="${esc(name)}">${ic('userplus')} ${fr?'Remove friend':'Add friend'}</button><button class="btn ${bl?'':'danger'}" data-act="${bl?'friend-unblock':'friend-block'}" data-user="${esc(name)}">${ic('ban')} ${bl?'Unblock':'Block'}</button>`}</div>`;
+  }});
+}
+
+/* Settings */
+function settingsHtml(){
+  const t=UI.stab,s=D.settings;
+  const tabs=[['profile','user','Profile'],['account','lock','Account'],['appearance','sun','Appearance'],['notifications','bell','Notifications'],['privacy','shield','Privacy'],['data','download','Data'],['about','help','About & limits']];
+  let b='';
+  if(t==='profile'){const p=D.profile;b=`<form data-form="profile"><label>Display name</label><input name="display" maxlength="32" value="${esc(p.display)}"><label>Bio</label><textarea name="bio" rows="3" maxlength="190">${esc(p.bio)}</textarea><label>Custom status</label><input name="status" maxlength="60" value="${esc(p.status)}" placeholder="What are you up to?"><label>Online status</label><select name="presence">${['online','idle','dnd','invisible'].map(x=>`<option value="${x}" ${p.presence===x?'selected':''}>${presLabel(x)}</option>`).join('')}</select><label>Avatar emoji (optional)</label><input name="emoji" maxlength="4" value="${esc(p.emoji)}" placeholder="e.g. 🦊"><label>Avatar colour</label><input name="hue" type="range" min="0" max="360" value="${esc(p.hue)}" style="width:100%"><div class="err" role="alert"></div><div class="row">${av(me,'xl')}<span class="grow"></span><button class="btn primary">Save profile</button></div></form>`;}
+  if(t==='account')b=`<div class="notice warn"><b>Demo account.</b> Stored only in this browser. Logging out ends the local session; it doesn’t protect your data from anyone using this browser profile.</div>
+    <h3 style="margin:1rem 0 .2rem">Change password</h3><form data-form="changePw"><label>Current password</label><input name="cur" type="password" autocomplete="current-password"><label>New password (min 8)</label><input name="n1" type="password" autocomplete="new-password"><label>Confirm new password</label><input name="n2" type="password" autocomplete="new-password"><div class="err" role="alert"></div><button class="btn primary">Update password</button></form>
+    <h3 style="margin:1.4rem 0 .2rem;color:var(--err)">Delete account</h3><p class="note">Removes this demo account and all of its local data from this browser. Shared DM history with other local accounts is removed too.</p><form data-form="deleteAcct"><label>Type your username (<b>${esc(me)}</b>) to confirm</label><input name="confirm" autocomplete="off"><label>Password</label><input name="pw" type="password" autocomplete="current-password"><div class="err" role="alert"></div><button class="btn danger">Delete account…</button></form>
+    <div class="mfoot" style="justify-content:flex-start"><button class="btn" data-act="logout">${ic('logout')} Log out</button></div>`;
+  if(t==='appearance')b=`<label>Theme</label><div class="theme-cards">${[['amoled','AMOLED','#000'],['dark','Dark','#1a1a27'],['light','Light','#fff']].map(([k,l,c])=>`<button class="${s.theme===k?'on':''}" data-act="set-theme" data-v="${k}" aria-pressed="${s.theme===k}"><span class="sw" style="background:${c}"></span>${l}</button>`).join('')}</div>
+    <label>Font size: <b>${s.fontSize}px</b></label><input type="range" min="13" max="19" value="${s.fontSize}" data-change="setting" data-path="fontSize" data-num="1" style="width:100%">
+    <label class="switch">Compact message layout<input type="checkbox" ${s.compact?'checked':''} data-change="setting" data-path="compact"></label>`;
+  if(t==='notifications')b=`<label class="switch">Notify me about mentions<input type="checkbox" ${s.notif.mentions?'checked':''} data-change="setting" data-path="notif.mentions"></label><label class="switch">Show toast pop-ups for notifications<input type="checkbox" ${s.notif.toasts?'checked':''} data-change="setting" data-path="notif.toasts"></label><label class="switch">Play a sound<input type="checkbox" ${s.notif.sound?'checked':''} data-change="setting" data-path="notif.sound"></label><label class="switch">Simulate sample users (typing, replies, activity)<input type="checkbox" ${s.notif.simulate?'checked':''} data-change="setting" data-path="notif.simulate"></label><p class="note">Notifications are generated locally while this tab is open. Push notifications need a backend.</p>`;
+  if(t==='privacy')b=`<label class="switch">Show my online status<input type="checkbox" ${s.privacy.showOnline?'checked':''} data-change="setting" data-path="privacy.showOnline"></label><label class="switch">Allow direct messages from non-friends<input type="checkbox" ${s.privacy.allowDMs?'checked':''} data-change="setting" data-path="privacy.allowDMs"></label><label class="switch">Send read receipts<input type="checkbox" ${s.privacy.readReceipts?'checked':''} data-change="setting" data-path="privacy.readReceipts"></label><div class="notice" style="margin-top:.8rem">These preferences are saved locally. They can’t affect other people without a backend that enforces them.</div>`;
+  if(t==='data')b=`<p class="note">Stored in this browser: about <b>${(JSON.stringify(D).length/1024).toFixed(1)} KB</b> for your profile${Object.keys(DM).length?' plus shared local DMs':''}.</p><div style="display:grid;gap:.6rem"><button class="btn" data-act="export-data">${ic('download')} Export my data (JSON)</button><button class="btn" data-act="reset-data">Reset demo data (keeps account)</button><button class="btn danger" data-act="wipe-all">Erase ALL NEXUS data in this browser</button></div><p class="note">Exports never include password hashes.</p>`;
+  if(t==='about')b=`<div class="notice"><b>NEXUS is a single-file front-end prototype.</b></div><ul style="margin:.8rem 0 0 1.2rem;line-height:1.7"><li><b>Accounts</b> are local demo records in localStorage — not secure authentication.</li><li><b>Messages</b> are saved only in your browser. Nobody on another device or browser can receive them.</li><li><b>Sample users</b> (badged SAMPLE) are simulated; their replies are canned.</li><li><b>Local accounts</b> created in the same browser can exchange DMs through shared localStorage.</li><li><b>Voice/video/screen sharing</b> are UI previews and need WebRTC + signaling backend.</li><li><b>Invites, roles, bans</b> only affect this browser’s copy of a community.</li><li>A real version needs: server-side auth, a database, a real-time layer (WebSockets), file storage, moderation tooling and push notifications.</li></ul><div class="mfoot" style="justify-content:flex-start"><button class="btn" data-act="shortcuts">${ic('help')} Keyboard shortcuts</button></div>`;
+  return `<div class="split"><nav role="tablist">${tabs.map(([k,i,l])=>`<button role="tab" class="${t===k?'on':''}" data-act="settings-tab" data-tab="${k}">${ic(i)} ${l}</button>`).join('')}</nav><div>${b}</div></div>`;
+}
+function openSettings(tab){if(tab)UI.stab=tab;openModal({title:'Settings',wide:true,render:settingsHtml});}
+function shortcutsModal(){openModal({title:'Keyboard shortcuts',render:()=>`<table style="width:100%;line-height:2.1">${[['Ctrl/⌘ + K','Search'],['Ctrl/⌘ + ,','Settings'],['Alt + ↑ / ↓','Previous / next channel'],['Alt + M','Toggle member list'],['Alt + B','Toggle channel sidebar'],['Alt + N','Notifications'],['Alt + T','Cycle theme'],['?','This help'],['Enter / Shift+Enter','Send / new line'],['↑ (empty composer)','Edit your last message'],['Esc','Close dialog, menu or reply']].map(([a,b])=>`<tr><td><kbd>${a}</kbd></td><td>${b}</td></tr>`).join('')}</table>`});}
+function callPreview(){
+  UI.voice.ch='call';
+  openModal({title:`Call with ${info(UI.dmUser).display} (UI preview)`,render:()=>`<div class="notice warn">${ic('lock')} <b>Requires backend services.</b> Calls need WebRTC + a signaling server. This preview doesn’t access your microphone or camera.</div><div class="tiles" style="margin:1rem 0">${tile(UI.dmUser,true,false)}${tile(me,false,UI.voice.cam,'You'+(UI.voice.mic?'':' (muted)'))}</div>${callControls()}`});
+}
+
+/* ---------- Community / channel operations ---------- */
+const slug=s=>s.toLowerCase().trim().replace(/\s+/g,'-').replace(/[^a-z0-9_-]/g,'').slice(0,32);
+function communityModal(){
+  openModal({title:'Create a community',render:()=>`<form data-form="createCommunity"><label>Community name</label><input name="name" maxlength="40" required><label>Icon (emoji, optional)</label><input name="icon" maxlength="4" placeholder="🌟"><label>Description</label><input name="desc" maxlength="200"><div class="err" role="alert"></div><div class="notice">Local demo: this community exists only in your browser. Invites can’t reach other people without a backend.</div><div class="mfoot"><button type="button" class="btn" data-act="modal-close">Cancel</button><button class="btn primary">Create</button></div></form>`});
+}
+function channelModal(catId){
+  const c=C();if(!c)return;
+  openModal({title:'Create channel',render:()=>`<form data-form="createChannel"><label>Channel name</label><input name="name" maxlength="32" placeholder="e.g. project-ideas" required><label>Type</label><select name="type"><option value="text">Text</option><option value="voice">Voice (UI preview)</option><option value="video">Video (UI preview)</option></select><label>Category</label><select name="cat"><option value="">(none)</option>${c.categories.map(k=>`<option value="${esc(k.id)}" ${k.id===catId?'selected':''}>${esc(k.name)}</option>`).join('')}</select><label>Description</label><input name="desc" maxlength="200"><div class="err" role="alert"></div><div class="mfoot"><button type="button" class="btn" data-act="modal-close">Cancel</button><button class="btn primary">Create</button></div></form>`});
+}
+function editChannelModal(id){
+  const c=C(),ch=c&&c.channels.find(x=>x.id===id);if(!ch)return;
+  if(!can('manageChannels')){toast('You need the “Manage channels” permission to edit channels.','warn');return;}
+  openModal({title:'Edit channel',render:()=>`<form data-form="editChannel" data-id="${esc(id)}"><label>Name</label><input name="name" maxlength="32" value="${esc(ch.name)}" required><label>Description</label><input name="desc" maxlength="200" value="${esc(ch.desc)}"><label>Category</label><select name="cat"><option value="">(none)</option>${c.categories.map(k=>`<option value="${esc(k.id)}" ${k.id===ch.cat?'selected':''}>${esc(k.name)}</option>`).join('')}</select><div class="err" role="alert"></div><div class="mfoot"><button type="button" class="btn" data-act="modal-close">Cancel</button><button class="btn primary">Save</button></div></form>`});
+}
+function categoryModal(id){
+  const c=C(),k=id&&c.categories.find(x=>x.id===id);
+  openModal({title:k?'Rename category':'Create category',render:()=>`<form data-form="category" data-id="${esc(id||'')}"><label>Category name</label><input name="name" maxlength="32" value="${esc(k?k.name:'')}" required><div class="err" role="alert"></div><div class="mfoot"><button type="button" class="btn" data-act="modal-close">Cancel</button><button class="btn primary">${k?'Save':'Create'}</button></div></form>`});
+}
+async function deleteChannel(id){
+  const c=C(),ch=c.channels.find(x=>x.id===id);if(!ch)return;
+  if(!(await confirmDlg({title:`Delete #${ch.name}?`,msg:'All messages in this channel will be permanently removed from this browser.',ok:'Delete channel',danger:true})))return;
+  c.channels=c.channels.filter(x=>x.id!==id);delete D.messages[id];delete D.unread[id];
+  if(UI.chid===id){const nx=c.channels.find(x=>x.type==='text')||c.channels[0];UI.chid=nx?nx.id:null;c.lastChid=UI.chid||'';}
+  saveSoon();renderAll();toast('Channel deleted','ok');
+}
+async function deleteCategory(id){
+  const c=C(),k=c.categories.find(x=>x.id===id);if(!k)return;
+  if(!(await confirmDlg({title:`Delete category “${k.name}”?`,msg:'Its channels are kept and moved out of the category.',ok:'Delete category',danger:true})))return;
+  c.categories=c.categories.filter(x=>x.id!==id);c.channels.forEach(ch=>{if(ch.cat===id)ch.cat='';});saveSoon();renderSidebar();toast('Category deleted','ok');
+}
+async function removeCommunity(id){
+  const c=D.communities.find(x=>x.id===id);if(!c)return;const own=c.owner===me;
+  if(!(await confirmDlg({title:own?`Delete “${c.name}”?`:`Leave “${c.name}”?`,msg:own?'The community and all its messages will be permanently removed from this browser.':'It will be removed from your list (local demo).',ok:own?'Delete':'Leave',danger:true})))return;
+  c.channels.forEach(ch=>{delete D.messages[ch.id];delete D.unread[ch.id];});D.communities=D.communities.filter(x=>x.id!==id);
+  closeModal();if(UI.cid===id)goHome(D.communities.length?'friends':'welcome');else{saveSoon();renderAll();}toast(own?'Community deleted':'Left community','ok');
+}
+async function memberAction(kind,name){
+  const c=C();if(!c||!need(kind))return;
+  if(!(await confirmDlg({title:`${cap(kind)} ${name}?`,msg:kind==='ban'?'They’ll be removed and listed as banned (local demo).':'They’ll be removed from this community’s member list (local demo).',ok:cap(kind),danger:true})))return;
+  c.members=c.members.filter(m=>m.name!==name);c.modlog.unshift({id:uid('l'),text:`${cap(kind)}ned ${name}`.replace('kned','ked').replace('banned','banned'),by:me,ts:Date.now()});
+  if(kind==='ban')c.banned.push(name);saveSoon();renderMembers();renderSidebar();if(modalState)refreshModal();toast(`${name} was ${kind==='ban'?'banned':'kicked'}`,'ok');
+}
+function communityTools(tab){
+  const c=C();if(!c)return;UI.ctab=tab||UI.ctab;
+  openModal({title:`${c.name} — community tools`,wide:true,render:communityToolsHtml});
+}
+function communityToolsHtml(){
+  const c=C();if(!c)return '<p>No community selected.</p>';const t=UI.ctab;
+  const tabs=[['announce','mega','Announcements'],['polls','poll','Polls'],['members','users','Members'],['roles','shield','Roles'],['moderation','ban','Moderation'],['settings','settings','Settings']];
+  let b='';
+  if(t==='announce')b=`<form data-form="announce"><label>Title</label><input name="title" maxlength="80"><label>Message</label><textarea name="body" rows="3" maxlength="600"></textarea><div class="err" role="alert"></div><button class="btn primary">${ic('mega')} Post announcement</button></form><h3 style="margin:1.2rem 0 .3rem">Announcements</h3>${c.announcements.length?c.announcements.map(a=>`<div class="list-row"><div class="grow"><b>${esc(a.title)}</b><small style="white-space:normal">${esc(a.body)}</small><small>by ${esc(info(a.by).display)} · ${new Date(a.ts).toLocaleString()}</small></div>${can('manageMessages')?`<button class="icon-btn" data-act="ann-del" data-id="${esc(a.id)}" aria-label="Delete announcement">${ic('trash')}</button>`:''}</div>`).join(''):'<p class="note">No announcements yet.</p>'}`;
+  if(t==='polls')b=`<form data-form="poll"><label>Question</label><input name="q" maxlength="120"><label>Options (one per line, 2–6)</label><textarea name="opts" rows="4" maxlength="500"></textarea><div class="err" role="alert"></div><button class="btn primary">${ic('poll')} Create poll</button></form><h3 style="margin:1.2rem 0 .3rem">Polls</h3>${c.polls.length?c.polls.map(p=>{const tot=p.options.reduce((n,o)=>n+o.votes.length,0);return `<div class="list-row" style="display:block"><div class="row"><b class="grow">${esc(p.q)}</b>${p.closed?'<span class="tag warn">CLOSED</span>':''}${(p.by===me||can('manageMessages'))?`<button class="btn sm" data-act="poll-close" data-id="${esc(p.id)}">${p.closed?'Reopen':'Close'}</button><button class="icon-btn" data-act="poll-del" data-id="${esc(p.id)}" aria-label="Delete poll">${ic('trash')}</button>`:''}</div>${p.options.map((o,i)=>`<button class="poll-opt ${o.votes.includes(me)?'me':''}" ${p.closed?'disabled':''} data-act="poll-vote" data-id="${esc(p.id)}" data-i="${i}"><div class="row"><span>${esc(o.t)}</span><small>${o.votes.length} vote${o.votes.length===1?'':'s'}</small></div><div class="bar"><i style="width:${tot?Math.round(o.votes.length/tot*100):0}%"></i></div></button>`).join('')}<small class="note">by ${esc(info(p.by).display)} · ${tot} total vote${tot===1?'':'s'}</small></div>`;}).join(''):'<p class="note">No polls yet.</p>'}`;
+  if(t==='members')b=`<form class="inline-form" data-form="addMember"><input name="username" placeholder="Add member by username (local demo)" maxlength="20" aria-label="Username to add"><button class="btn primary">${ic('userplus')} Add</button></form><div class="err" role="alert"></div><p class="note">Local-demo invitation: adds a name to this browser’s copy of the member list. No notification is sent to anyone.</p>${c.members.map(m=>{const i=info(m.name);return `<div class="list-row">${av(m.name,'',true)}<div class="grow"><b>${esc(i.display)}</b> ${i.sample?'<span class="tag">SAMPLE</span>':''}<small>${esc(presLabel(i.presence))}</small></div>${m.name===c.owner||!can('manageRoles')?`<span class="chip">${esc((c.roles.find(r=>r.id===m.role)||{name:'Member'}).name)}</span>`:`<select data-change="role-set" data-user="${esc(m.name)}" aria-label="Role of ${esc(m.name)}" style="width:auto">${c.roles.filter(r=>r.id!=='owner').map(r=>`<option value="${esc(r.id)}" ${r.id===m.role?'selected':''}>${esc(r.name)}</option>`).join('')}</select>`}${m.name!==me&&m.name!==c.owner?`${can('kick')?`<button class="btn sm" data-act="member-kick" data-user="${esc(m.name)}">Kick</button>`:''}${can('ban')?`<button class="btn sm danger" data-act="member-ban" data-user="${esc(m.name)}">Ban</button>`:''}`:''}</div>`;}).join('')}`;
+  if(t==='roles')b=`<p class="note">Your role: <b>${esc(myRole(c).name)}</b>${c.owner===me?' (owner — all permissions)':''}. Permissions are enforced locally in this prototype only.</p>${c.roles.map(r=>`<div class="list-row" style="display:block"><div class="row"><span class="sw" style="background:${esc(r.color)}"></span><b class="grow">${esc(r.name)}</b>${r.locked?'<span class="chip">locked</span>':(can('manageRoles')&&!['admin','mod','member'].includes(r.id)?`<button class="icon-btn" data-act="role-del" data-id="${esc(r.id)}" aria-label="Delete role">${ic('trash')}</button>`:'')}</div><div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:.4rem">${Object.entries(PERMS).map(([k,l])=>`<label class="switch" style="border:0;font-size:.82rem;gap:.4rem;margin:0;padding:.1rem 0"><input type="checkbox" ${r.perms[k]?'checked':''} ${r.locked||!can('manageRoles')?'disabled':''} data-change="perm-set" data-role="${esc(r.id)}" data-perm="${k}">${l}</label>`).join('')}</div></div>`).join('')}${can('manageRoles')?`<form class="inline-form" data-form="createRole" style="margin-top:.8rem"><input name="name" placeholder="New role name" maxlength="30"><input name="color" type="color" value="#8b5cf6" style="max-width:4rem;padding:.2rem" aria-label="Role colour"><button class="btn primary">${ic('plus')} Add role</button></form><div class="err" role="alert"></div>`:''}`;
+  if(t==='moderation')b=`${!can('manageMessages')&&!can('kick')?`<div class="notice warn">You don’t have moderation permissions here.</div>`:''}<h3 style="margin:.2rem 0 .4rem">AutoMod (applies to messages you send here)</h3><label class="switch">Block links<input type="checkbox" ${c.mod.blockLinks?'checked':''} ${can('manageMessages')?'':'disabled'} data-change="automod-links"></label><form class="inline-form" data-form="blockWords" style="margin-top:.6rem"><input name="words" placeholder="Blocked words, comma separated" value="${esc(c.mod.words.join(', '))}" ${can('manageMessages')?'':'disabled'}><button class="btn" ${can('manageMessages')?'':'disabled'}>Save</button></form>
+    <h3 style="margin:1.2rem 0 .3rem">Banned (${c.banned.length})</h3>${c.banned.length?c.banned.map(n=>`<div class="list-row">${av(n,'sm')}<b class="grow">${esc(n)}</b>${can('ban')?`<button class="btn sm" data-act="member-unban" data-user="${esc(n)}">Unban</button>`:''}</div>`).join(''):'<p class="note">Nobody is banned.</p>'}
+    <h3 style="margin:1.2rem 0 .3rem">Moderation log</h3>${c.modlog.length?c.modlog.slice(0,30).map(l=>`<div class="list-row">${ic('shield')}<div class="grow"><b>${esc(l.text)}</b><small>by ${esc(l.by)} · ${new Date(l.ts).toLocaleString()}</small></div></div>`).join(''):'<p class="note">No actions logged yet.</p>'}`;
+  if(t==='settings'){const ok=can('manageCommunity');b=`<form data-form="communitySettings"><label>Name</label><input name="name" maxlength="40" value="${esc(c.name)}" ${ok?'':'disabled'}><label>Icon (emoji)</label><input name="icon" maxlength="4" value="${esc(c.icon)}" ${ok?'':'disabled'}><label>Description</label><input name="desc" maxlength="200" value="${esc(c.desc)}" ${ok?'':'disabled'}><div class="err" role="alert"></div>${ok?`<button class="btn primary">Save changes</button>`:`<p class="note">You need “Manage community” to edit these.</p>`}</form>
+    <h3 style="margin:1.2rem 0 .3rem">Invite (local demo)</h3><div class="inline-form"><input readonly value="nexus-demo-${esc(c.id.slice(-6))}" aria-label="Local demo invite code"><button class="btn" data-act="copy-invite">${ic('copy')} Copy</button></div><p class="note">This code is cosmetic. Real invite links require a backend.</p>
+    <div class="mfoot" style="justify-content:flex-start"><button class="btn danger" data-act="delete-community" data-id="${esc(c.id)}">${ic('trash')} ${c.owner===me?'Delete community':'Leave community'}</button></div>`;}
+  return `<div class="split"><nav role="tablist">${tabs.map(([k,i,l])=>`<button role="tab" class="${t===k?'on':''}" data-act="ctab" data-tab="${k}">${ic(i)} ${l}</button>`).join('')}</nav><div>${b}</div></div>`;
+}
+function pinsModal(){
+  const cv=convo();if(!cv)return;
+  openModal({title:'Pinned messages',render:()=>{const p=cv.list.filter(m=>m.pinned);return p.length?p.map(m=>`<div class="list-row">${av(m.author,'sm')}<div class="grow"><b>${esc(info(m.author).display)}</b><small style="white-space:normal">${esc(m.text.slice(0,160))}</small></div><button class="btn sm" data-act="go-link" data-target='${esc(JSON.stringify(cv.kind==='dm'?{dm:UI.dmUser,msgId:m.id}:{cid:UI.cid,chid:UI.chid,msgId:m.id}))}'>Jump</button><button class="icon-btn" data-act="unpin" data-id="${esc(m.id)}" aria-label="Unpin">${ic('pin')}</button></div>`).join(''):`<div class="empty"><div class="big">${ic('pin')}</div><h3>No pinned messages</h3><p>Pin a message from its ⋯ menu.</p></div>`;}});
+}
+
+/* ---------- 8. FORMS & ACTIONS ---------- */
+const fd=f=>Object.fromEntries(new FormData(f).entries());
+const formErr=(f,m)=>{const e=$('.err',f);if(e)e.textContent=m;return false;};
+const busy=(f,on)=>{const b=$('button:not([type=button])',f);if(b){b.classList.toggle('busy',on);b.disabled=on;}};
+const FORMS={
+  async login(f){
+    const{username,password}=fd(f);formErr(f,'');
+    if(!username.trim()||!password)return formErr(f,'Enter your username and password.');
+    const k=findAcct(username.trim());busy(f,true);
+    try{if(!k||!(await checkPw(password,ACCTS[k]))){busy(f,false);return formErr(f,'Incorrect username or password.');}}
+    catch(e){busy(f,false);return formErr(f,e.message);}
+    busy(f,false);f.reset();startSession(k,false);
+  },
+  async register(f){
+    const{username,password,confirm}=fd(f);formErr(f,'');const u=username.trim();
+    if(!/^[A-Za-z0-9_]{3,20}$/.test(u))return formErr(f,'Username must be 3–20 characters: letters, numbers or underscore.');
+    if(RESERVED.has(u.toLowerCase())||findAcct(u))return formErr(f,'That username is already taken in this browser.');
+    if(password.length<8)return formErr(f,'Password must be at least 8 characters.');
+    if(password!==confirm)return formErr(f,'Passwords do not match.');
+    busy(f,true);
+    try{const salt=rndSalt();const h=await hashPw(password,salt);ACCTS[u]={salt,hash:h.hash,algo:h.algo,created:Date.now(),pub:{display:u,presence:'online'}};if(!saveAccts()){delete ACCTS[u];busy(f,false);return formErr(f,'Could not save the account (browser storage unavailable).');}}
+    catch(e){busy(f,false);return formErr(f,'Could not create the account: '+e.message);}
+    busy(f,false);f.reset();toast('Demo account created','ok');startSession(u,true);
+  },
+  send(){sendMessage();},
+  createCommunity(f){
+    const{name,icon,desc}=fd(f);const n=name.trim();if(n.length<2)return formErr(f,'Name must be at least 2 characters.');
+    if(D.communities.some(c=>c.name.toLowerCase()===n.toLowerCase()))return formErr(f,'You already have a community with that name.');
+    const k={id:uid('k'),name:'Text Channels'},k2={id:uid('k'),name:'Voice Channels'};
+    const g={id:uid('ch'),name:'general',type:'text',cat:k.id,desc:'General conversation',fav:false,pinned:false},v={id:uid('ch'),name:'lounge',type:'voice',cat:k2.id,desc:'Voice UI preview',fav:false,pinned:false};
+    const c={id:uid('c'),name:n,icon:icon.trim(),desc:desc.trim(),sample:false,owner:me,lastChid:g.id,categories:[k,k2],channels:[g,v],members:[{name:me,role:'owner'}],roles:defaultRoles(),announcements:[],polls:[],modlog:[],banned:[],mod:{blockLinks:false,words:[]}};
+    c.channels.length&&(D.messages[g.id]=[{id:uid('m'),author:me,text:`Welcome to **${n}**! (local demo community)`,ts:Date.now(),edited:false,replyTo:null,reactions:{},pinned:false}]);
+    D.communities.push(c);closeModal();openCommunity(c.id);toast(`Created “${n}”`,'ok');
+  },
+  createChannel(f){
+    const c=C();if(!need('manageChannels'))return;const{name,type,cat,desc}=fd(f);const n=slug(name);
+    if(!n)return formErr(f,'Use letters, numbers, - or _ in the channel name.');
+    if(c.channels.some(x=>x.name===n))return formErr(f,'A channel with that name already exists.');
+    const ch={id:uid('ch'),name:n,type:['text','voice','video'].includes(type)?type:'text',cat,desc:desc.trim(),fav:false,pinned:false};c.channels.push(ch);closeModal();openChannel(ch.id);toast(`Created #${n}`,'ok');
+  },
+  editChannel(f){
+    const c=C(),ch=c.channels.find(x=>x.id===f.dataset.id);if(!ch)return;const{name,desc,cat}=fd(f);const n=slug(name);
+    if(!n)return formErr(f,'Invalid channel name.');if(c.channels.some(x=>x.name===n&&x.id!==ch.id))return formErr(f,'That name is already used.');
+    ch.name=n;ch.desc=desc.trim();ch.cat=cat;saveSoon();closeModal();renderAll();toast('Channel updated','ok');
+  },
+  category(f){
+    const c=C();if(!need('manageChannels'))return;const n=fd(f).name.trim();if(!n)return formErr(f,'Enter a name.');
+    if(f.dataset.id){const k=c.categories.find(x=>x.id===f.dataset.id);if(k)k.name=n;}else c.categories.push({id:uid('k'),name:n});
+    saveSoon();closeModal();renderSidebar();toast('Category saved','ok');
+  },
+  addFriend(f){
+    const u=fd(f).username.trim();formErr(f,'');if(!u)return formErr(f,'Enter a username.');
+    const k=SAMPLES[Object.keys(SAMPLES).find(s=>s.toLowerCase()===u.toLowerCase())]?Object.keys(SAMPLES).find(s=>s.toLowerCase()===u.toLowerCase()):findAcct(u);
+    if(!k)return formErr(f,`No demo user “${u}” exists in this browser. (Real friend requests need a backend.)`);
+    if(k===me)return formErr(f,'You can’t add yourself.');if(D.friends.includes(k))return formErr(f,`${k} is already your friend.`);
+    D.blocked=D.blocked.filter(x=>x!==k);D.friends.push(k);saveSoon();f.reset();renderFriendList();renderSidebar();toast(`${k} added (local demo)`,'ok');
+  },
+  profile(f){
+    const v=fd(f);const dn=v.display.trim();if(!dn)return formErr(f,'Display name can’t be empty.');
+    Object.assign(D.profile,{display:dn,bio:v.bio.trim(),status:v.status.trim(),presence:['online','idle','dnd','invisible'].includes(v.presence)?v.presence:'online',emoji:v.emoji.trim(),hue:+v.hue||0});
+    ACCTS[me].pub={display:dn,bio:D.profile.bio,status:D.profile.status,presence:D.profile.presence,emoji:D.profile.emoji,hue:D.profile.hue};saveAccts();saveSoon();renderAll();refreshModal();toast('Profile saved','ok');
+  },
+  async changePw(f){
+    const{cur,n1,n2}=fd(f);formErr(f,'');
+    try{if(!(await checkPw(cur,ACCTS[me])))return formErr(f,'Current password is incorrect.');}catch(e){return formErr(f,e.message);}
+    if(n1.length<8)return formErr(f,'New password must be at least 8 characters.');if(n1!==n2)return formErr(f,'New passwords do not match.');if(n1===cur)return formErr(f,'New password must differ from the current one.');
+    const salt=rndSalt(),h=await hashPw(n1,salt);Object.assign(ACCTS[me],{salt,hash:h.hash,algo:h.algo});saveAccts();f.reset();toast('Password updated (demo account)','ok');
+  },
+  async deleteAcct(f){
+    const{confirm,pw}=fd(f);formErr(f,'');
+    if(confirm!==me)return formErr(f,'Type your exact username to confirm.');
+    try{if(!(await checkPw(pw,ACCTS[me])))return formErr(f,'Password is incorrect.');}catch(e){return formErr(f,e.message);}
+    if(!(await confirmDlg({title:'Delete this account?',msg:'This permanently removes the demo account and its local data from this browser.',ok:'Delete account',danger:true})))return;
+    const u=me;delete ACCTS[u];saveAccts();store.del('user.'+u);store.del('hb.'+u);
+    Object.keys(DM).forEach(k=>{if(k.split('|').includes(u))delete DM[k];});store.set('dm',DM);
+    closeModal();doLogout(true);toast('Account deleted','ok');
+  },
+  announce(f){if(!need('manageMessages'))return;const{title,body}=fd(f);if(!title.trim()||!body.trim())return formErr(f,'Add a title and a message.');C().announcements.unshift({id:uid('a'),title:title.trim(),body:body.trim(),by:me,ts:Date.now()});saveSoon();refreshModal();toast('Announcement posted','ok');},
+  poll(f){const{q,opts}=fd(f);const o=opts.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,6);if(!q.trim())return formErr(f,'Enter a question.');if(o.length<2)return formErr(f,'Add at least two options (one per line).');C().polls.unshift({id:uid('p'),q:q.trim(),by:me,ts:Date.now(),closed:false,options:o.map(t=>({t:t.slice(0,80),votes:[]}))});saveSoon();refreshModal();toast('Poll created','ok');},
+  addMember(f){
+    if(!need('manageRoles'))return;const c=C(),u=fd(f).username.trim();const k=Object.keys(SAMPLES).find(s=>s.toLowerCase()===u.toLowerCase())||findAcct(u);
+    if(!k)return formErr(f,`No demo user “${u}” exists in this browser.`);if(c.members.some(m=>m.name===k))return formErr(f,'Already a member.');if(c.banned.includes(k))return formErr(f,'That user is banned. Unban first.');
+    c.members.push({name:k,role:'member'});c.modlog.unshift({id:uid('l'),text:`Added ${k} (local demo invite)`,by:me,ts:Date.now()});saveSoon();renderMembers();renderSidebar();refreshModal();toast(`${k} added (local demo)`,'ok');
+  },
+  createRole(f){const n=fd(f).name.trim();if(!n)return formErr(f,'Enter a role name.');const c=C();if(c.roles.some(r=>r.name.toLowerCase()===n.toLowerCase()))return formErr(f,'Role name already used.');c.roles.splice(c.roles.length-1,0,{id:uid('r'),name:n,color:fd(f).color,perms:{}});saveSoon();refreshModal();},
+  blockWords(f){if(!need('manageMessages'))return;C().mod.words=fd(f).words.split(',').map(s=>s.trim()).filter(Boolean).slice(0,30);saveSoon();toast('AutoMod words saved','ok');},
+  communitySettings(f){if(!need('manageCommunity'))return;const{name,icon,desc}=fd(f);if(name.trim().length<2)return formErr(f,'Name must be at least 2 characters.');const c=C();Object.assign(c,{name:name.trim(),icon:icon.trim(),desc:desc.trim()});saveSoon();renderAll();toast('Community updated','ok');},
+  addTask(f){const t=fd(f).text.trim();if(!t)return formErr(f,'Enter a task.');D.tasks.unshift({id:uid('t'),text:t,done:false,ts:Date.now()});saveSoon();renderTools();},
+  addBookmark(f){const{title,url}=fd(f);if(!title.trim()&&!url.trim())return formErr(f,'Enter a title or link.');if(url.trim()&&!/^https?:\/\//i.test(url.trim()))return formErr(f,'Links must start with http:// or https://');D.bookmarks.unshift({id:uid('b'),type:'link',title:title.trim(),url:url.trim(),text:'',author:'',ts:Date.now(),target:null});saveSoon();renderTools();},
+  addReminder(f){const{text,at}=fd(f);const t=new Date(at).getTime();if(!text.trim())return formErr(f,'Enter reminder text.');if(!Number.isFinite(t))return formErr(f,'Pick a date and time.');if(t<=Date.now())return formErr(f,'Choose a time in the future.');D.reminders.push({id:uid('r'),text:text.trim(),at:t,done:false});saveSoon();renderTools();toast('Reminder set','ok');}
+};
+
+const ACTIONS={
+  'auth-tab':el=>{const t=el.dataset.tab;$$('#auth .tabs button').forEach(b=>b.classList.toggle('on',b===el));$('#f-login').hidden=t!=='login';$('#f-register').hidden=t!=='register';$$('#auth .err').forEach(e=>e.textContent='');const i=$(t==='login'?'#l-user':'#r-user');i&&i.focus();},
+  'toggle-pw':el=>{const i=$('input',el.parentElement);const show=i.type==='password';i.type=show?'text':'password';el.innerHTML=ic(show?'eyeoff':'eye');el.setAttribute('aria-label',show?'Hide password':'Show password');},
+  home:()=>goHome(),
+  'open-community':el=>openCommunity(el.dataset.id),
+  'go-community':el=>{closeModal();openCommunity(el.dataset.id);},
+  'create-community':()=>{closeTransient();communityModal();},
+  'load-sample':()=>{const s=seedData(me);let n=0;s.communities.forEach(c=>{if(!D.communities.some(x=>x.name===c.name)){D.communities.push(c);c.channels.forEach(ch=>{D.messages[ch.id]=s.messages[ch.id]||[];});n++;}});saveSoon();if(n){toast('Sample communities loaded','ok');renderAll();}else toast('Sample communities are already loaded','warn');},
+  'cycle-theme':()=>{setTheme(THEMES[(THEMES.indexOf(D.settings.theme)+1)%3]);toast('Theme: '+D.settings.theme.toUpperCase(),'ok',1500);},
+  'set-theme':el=>setTheme(el.dataset.v),
+  'toggle-left':()=>{UI.leftOpen=!UI.leftOpen;UI.membersDrawer=false;syncDrawers();},
+  'toggle-sidebar':()=>$('#app').classList.toggle('sb-collapsed'),
+  'toggle-members':()=>{if(innerWidth<=980){UI.membersDrawer=!UI.membersDrawer;UI.leftOpen=false;syncDrawers();}else{UI.membersOpen=!UI.membersOpen;renderMembers();renderTopbar();}if(UI.membersDrawer)renderMembers();},
+  'close-drawers':closeDrawers,
+  'community-menu':el=>menuAt(el,communityMenuItems(UI.cid)),
+  'community-tools':()=>communityTools('announce'),
+  'fav-only':()=>{UI.favOnly=!UI.favOnly;renderSidebar();},
+  'create-channel':()=>need('manageChannels')&&channelModal(),
+  'add-channel-in':el=>need('manageChannels')&&channelModal(el.dataset.id),
+  'open-channel':el=>openChannel(el.dataset.id),
+  'channel-menu':el=>menuAt(el,channelMenuItems(el.dataset.id)),
+  'edit-channel':el=>editChannelModal(el.dataset.id),
+  'toggle-cat':el=>{const id=el.dataset.id;if(!id)return;D.collapsed[id]=!D.collapsed[id];saveSoon();renderSidebar();},
+  'open-dm':el=>{closeModal();openDM(el.dataset.user);},
+  'open-friends':()=>goHome('friends'),
+  'open-tools':()=>goHome('tools'),
+  'tools-tab':el=>{UI.tools=el.dataset.tab;renderTools();},
+  'task-filter':el=>{UI.tasksFilter=el.dataset.f;renderTools();},
+  'task-del':el=>{D.tasks=D.tasks.filter(t=>t.id!==el.dataset.id);saveSoon();renderTools();},
+  'task-clear':()=>{D.tasks=D.tasks.filter(t=>!t.done);saveSoon();renderTools();},
+  'bm-del':el=>{D.bookmarks=D.bookmarks.filter(b=>b.id!==el.dataset.id);saveSoon();renderTools();},
+  'rem-del':el=>{D.reminders=D.reminders.filter(r=>r.id!==el.dataset.id);saveSoon();renderTools();},
+  'open-profile':()=>openSettings('profile'),
+  'open-settings':()=>openSettings(),
+  'open-settings-tab':el=>openSettings(el.dataset.tab),
+  'settings-tab':el=>{UI.stab=el.dataset.tab;refreshModal();},
+  shortcuts:shortcutsModal,
+  logout:()=>{closeModal();doLogout();},
+  'modal-close':()=>closeModal(),
+  'modal-back':(el,e)=>{if(e.target===el)closeModal();},
+  notif:el=>{if(!$('#popover').hidden&&$('#popover').dataset.k==='notif'){closeTransient();return;}showPopover(el,notifHtml());$('#popover').dataset.k='notif';},
+  'notif-read':el=>{const n=D.notifications.find(x=>x.id===el.dataset.id);if(n)n.read=true;saveSoon();$('#popover').innerHTML=notifHtml();renderTopbar();},
+  'notif-readall':()=>{D.notifications.forEach(n=>n.read=true);saveSoon();$('#popover').innerHTML=notifHtml();renderTopbar();},
+  'notif-clear':async()=>{if(!D.notifications.length)return;closeTransient();if(!(await confirmDlg({title:'Clear all notifications?',msg:'This removes every notification.',ok:'Clear all',danger:true})))return;D.notifications=[];saveSoon();renderTopbar();toast('Notifications cleared','ok');},
+  'notif-open':el=>{const n=D.notifications.find(x=>x.id===el.dataset.id);if(!n)return;n.read=true;saveSoon();closeTransient();renderTopbar();if(n.target)gotoTarget(n.target);},
+  search:()=>{closeTransient();openSearch();},
+  'search-scope':el=>{UI.gscope=el.dataset.s;$$('#modal-root .tabs button').forEach(b=>b.classList.toggle('on',b===el));$('#gres').innerHTML=searchHtml();},
+  'go-link':el=>{try{gotoTarget(JSON.parse(el.dataset.target));}catch(e){toast('That link is no longer valid.','error');}},
+  'view-user':el=>viewUser(el.dataset.user),
+  pins:pinsModal,unpin:el=>{togglePin(el.dataset.id);},
+  'filter-toggle':()=>{UI.filter.open=!UI.filter.open;renderTopbar();const fb=$('.filterbar');if(fb){fb.hidden=!UI.filter.open;if(UI.filter.open)$('#filterq').focus();}},
+  'filter-clear':()=>{UI.filter={q:'',type:'all',open:UI.filter.open};renderTopbar();const q=$('#filterq'),t=$('#filtert');if(q)q.value='';if(t)t.value='all';renderMessages();},
+  'emoji-composer':el=>openEmoji(el,e=>{const t=$('#input');if(!t)return;const s=t.selectionStart;t.value=t.value.slice(0,s)+e+t.value.slice(t.selectionEnd);t.focus();t.selectionStart=t.selectionEnd=s+e.length;autoGrow(t);const cv=convo();if(cv)UI.drafts[cv.key]=t.value;}),
+  'emoji-tab':el=>{emojiTab=el.dataset.tab;$('#popover').innerHTML=emojiHtml();},
+  'emoji-pick':el=>{const cb=emojiCb;closeTransient();if(cb)cb(el.dataset.emoji);},
+  'react-pick':el=>{const id=el.dataset.id;openEmoji(el,e=>toggleReaction(id,e));},
+  react:el=>toggleReaction(el.dataset.id,el.dataset.emoji),
+  reply:el=>startReply(el.dataset.id),'cancel-reply':()=>{UI.replyTo=null;renderReplyBar();},
+  'msg-menu':el=>menuAt(el,msgMenuItems(el.dataset.id)),
+  jump:el=>jumpTo(el.dataset.id),
+  reveal:el=>{UI.revealed.add(el.dataset.id);renderMessages(true);},
+  'save-edit':saveEdit,'cancel-edit':()=>{UI.editing=null;renderMessages(true);},
+  ftab:el=>{UI.ftab=el.dataset.tab;renderFriends();},
+  'friend-add':el=>{const u=el.dataset.user;if(!D.friends.includes(u)){D.blocked=D.blocked.filter(x=>x!==u);D.friends.push(u);saveSoon();toast(`${u} added (local demo)`,'ok');if(modalState)refreshModal();if(UI.view==='friends'&&!UI.cid)renderFriendList();}},
+  'friend-remove':async el=>{const u=el.dataset.user;if(!(await confirmDlg({title:`Remove ${u}?`,msg:'They’ll be removed from your friends list.',ok:'Remove',danger:true})))return;D.friends=D.friends.filter(x=>x!==u);saveSoon();if(modalState)refreshModal();if(!UI.cid&&UI.view==='friends')renderFriendList();toast('Friend removed','ok');},
+  'friend-block':async el=>{const u=el.dataset.user;if(!(await confirmDlg({title:`Block ${u}?`,msg:'Their messages will be hidden and they’ll be removed from your friends.',ok:'Block',danger:true})))return;D.friends=D.friends.filter(x=>x!==u);if(!D.blocked.includes(u))D.blocked.push(u);saveSoon();if(modalState)refreshModal();renderAll();toast(`${u} blocked`,'ok');},
+  'friend-unblock':el=>{D.blocked=D.blocked.filter(x=>x!==el.dataset.user);saveSoon();if(modalState)refreshModal();renderAll();toast('User unblocked','ok');},
+  ctab:el=>{UI.ctab=el.dataset.tab;refreshModal();},
+  'member-kick':el=>memberAction('kick',el.dataset.user),'member-ban':el=>memberAction('ban',el.dataset.user),
+  'member-unban':el=>{if(!need('ban'))return;const c=C();c.banned=c.banned.filter(n=>n!==el.dataset.user);c.modlog.unshift({id:uid('l'),text:`Unbanned ${el.dataset.user}`,by:me,ts:Date.now()});saveSoon();refreshModal();},
+  'role-del':async el=>{if(!need('manageRoles'))return;const c=C();if(!(await confirmDlg({title:'Delete role?',msg:'Members with this role become regular members.',ok:'Delete',danger:true})))return;c.members.forEach(m=>{if(m.role===el.dataset.id)m.role='member';});c.roles=c.roles.filter(r=>r.id!==el.dataset.id);saveSoon();renderMembers();refreshModal();},
+  'poll-vote':el=>{const p=C().polls.find(x=>x.id===el.dataset.id);if(!p||p.closed)return;const i=+el.dataset.i;const had=p.options[i].votes.includes(me);p.options.forEach(o=>o.votes=o.votes.filter(v=>v!==me));if(!had)p.options[i].votes.push(me);saveSoon();refreshModal();},
+  'poll-close':el=>{const p=C().polls.find(x=>x.id===el.dataset.id);if(p){p.closed=!p.closed;saveSoon();refreshModal();}},
+  'poll-del':async el=>{if(!(await confirmDlg({title:'Delete poll?',msg:'Votes will be lost.',ok:'Delete',danger:true})))return;const c=C();c.polls=c.polls.filter(p=>p.id!==el.dataset.id);saveSoon();refreshModal();},
+  'ann-del':el=>{const c=C();c.announcements=c.announcements.filter(a=>a.id!==el.dataset.id);saveSoon();refreshModal();},
+  'copy-invite':()=>copyText('nexus-demo-'+C().id.slice(-6)),
+  'delete-community':el=>removeCommunity(el.dataset.id),
+  'voice-join':el=>{UI.voice={ch:el.dataset.id,mic:true,deaf:false,cam:false,screen:false};renderContent();toast('Joined preview (no audio/video is used)','info');},
+  'voice-toggle':el=>{const k=el.dataset.k;UI.voice[k]=!UI.voice[k];if(k==='deaf'&&UI.voice.deaf)UI.voice.mic=false;if(modalState)refreshModal();else renderContent();toast(`${cap(k==='cam'?'camera':k==='deaf'?'deafen':k==='screen'?'screen share':'microphone')}: ${UI.voice[k]?'on':'off'} (UI preview only)`,'info',1600);},
+  'voice-leave':()=>{UI.voice={ch:null,mic:true,deaf:false,cam:false,screen:false};if(modalState)closeModal();else renderContent();},
+  'call-preview':callPreview,
+  'export-data':()=>{const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),user:me,data:D,sharedDMs:Object.fromEntries(Object.entries(DM).filter(([k])=>k.split('|').includes(me)))},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nexus-${me}-export.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Export downloaded','ok');},
+  'reset-data':async()=>{if(!(await confirmDlg({title:'Reset demo data?',msg:'Your communities, messages, friends, notes, tasks and settings will be replaced with fresh sample data. Your account is kept. This cannot be undone.',ok:'Reset',danger:true})))return;Object.keys(DM).forEach(k=>{if(k.split('|').includes(me))delete DM[k];});store.set('dm',DM);D=seedData(me);const p=ACCTS[me]&&ACCTS[me].pub;if(p)D.profile.display=p.display||me;saveNow();resetUI();closeModal();applyUi();initNav();renderAll();toast('Demo data reset','ok');},
+  'wipe-all':async()=>{if(!(await confirmDlg({title:'Erase ALL NEXUS data?',msg:'Deletes every demo account, message and setting stored by NEXUS in this browser. This cannot be undone.',ok:'Erase everything',danger:true})))return;closeModal();me=null;D=null;try{Object.keys(localStorage).filter(k=>k.startsWith(NS)).forEach(k=>localStorage.removeItem(k));}catch(e){}ACCTS={};DM={};showAuth();toast('All NEXUS data erased','ok');},
+  'reload-view':()=>renderAll()
+};
+const CHANGES={
+  setting:el=>{const path=el.dataset.path.split('.');let o=D.settings;for(let i=0;i<path.length-1;i++)o=o[path[i]];const k=path[path.length-1];o[k]=el.type==='checkbox'?el.checked:el.dataset.num?+el.value:el.value;applyUi();saveSoon();if(k==='fontSize'){const l=el.previousElementSibling;if(l)l.innerHTML=`Font size: <b>${o[k]}px</b>`;}if(k==='compact')renderMessages(true);},
+  'task-toggle':el=>{const t=D.tasks.find(x=>x.id===el.dataset.id);if(t){t.done=el.checked;saveSoon();renderTools();}},
+  'role-set':el=>{if(!need('manageRoles'))return;const c=C(),m=c.members.find(x=>x.name===el.dataset.user);if(m){m.role=el.value;c.modlog.unshift({id:uid('l'),text:`Set ${m.name}'s role to ${(c.roles.find(r=>r.id===el.value)||{}).name}`,by:me,ts:Date.now()});saveSoon();renderMembers();refreshModal();}},
+  'perm-set':el=>{if(!need('manageRoles'))return;const r=C().roles.find(x=>x.id===el.dataset.role);if(r&&!r.locked){if(el.checked)r.perms[el.dataset.perm]=1;else delete r.perms[el.dataset.perm];saveSoon();}},
+  'automod-links':el=>{if(!need('manageMessages')){el.checked=!el.checked;return;}C().mod.blockLinks=el.checked;saveSoon();}
+};
+
+/* Session */
+function initNav(){
+  const n=D.nav;const c=D.communities.find(x=>x.id===n.cid);
+  if(c){UI.cid=c.id;UI.chid=(c.channels.find(x=>x.id===n.chid)||c.channels.find(x=>x.type==='text')||c.channels[0]||{}).id||null;UI.view='chat';}
+  else{UI.cid=null;UI.view=D.communities.length?(['friends','tools','welcome'].includes(n.view)?n.view:'friends'):'welcome';}
+  if(UI.cid&&UI.chid)delete D.unread[UI.chid];
+}
+function loadUserData(){
+  store.corrupt=false;
+  const raw=store.get('user.'+me,null);let d=raw?sanitize(raw,me):null;
+  if(raw&&!d){toast('Saved data was damaged. Defaults restored; a backup copy was kept.','warn',6000);}
+  if(store.corrupt)toast('Saved data could not be read. Defaults restored; a backup copy was kept.','warn',6000);
+  D=d||seedData(me);const p=ACCTS[me]&&ACCTS[me].pub;if(!d&&p&&p.display)D.profile.display=p.display;
+}
+function startSession(u,isNew){
+  me=u;store.set('session',{user:u,ts:Date.now()});resetUI();DM=loadDM();loadUserData();
+  if(isNew)D.notifications.unshift({id:uid('n'),text:`Account “${u}” created. Remember: this is a local demo account.`,ts:Date.now(),read:false,target:null,type:'system'});
+  showApp();
+}
+function showApp(){
+  $('#auth').hidden=true;$('#app').hidden=false;applyUi();initNav();syncDmNotifs();renderAll();
+  store.set('hb.'+me,Date.now());
+  if(!showApp.once){showApp.once=true;toast(`Welcome, ${info(me).display}! Local demo mode.`,'ok');}
+}
+function showAuth(){$('#app').hidden=true;$('#auth').hidden=false;const s=store.get('ui',null);if(s)applyUi(mergeDefaults(DEFAULT_SETTINGS,s));closeModal(true);closeTransient();showApp.once=false;ACTIONS['auth-tab']($('#auth .tabs button'));}
+function doLogout(silent){
+  saveNow();store.del('session');me=null;D=null;resetUI();showAuth();if(!silent)toast('Logged out','ok');
+}
+
+/* ---------- 9. EVENTS & BOOT ---------- */
+let pressT=null,suppress=false;
+document.addEventListener('click',e=>{
+  if(suppress){suppress=false;e.preventDefault();return;}
+  const mi=e.target.closest('#ctx [data-mi]');
+  if(mi){const it=$('#ctx')._items[+mi.dataset.mi];closeTransient();if(it&&it.onClick)it.onClick();return;}
+  const t=e.target.closest('[data-act]');
+  if(!e.target.closest('#ctx,#popover')&&!(t&&['notif','emoji-composer','react-pick','community-menu','channel-menu','msg-menu'].includes(t.dataset.act)))closeTransient();
+  if(!t)return;
+  const fn=ACTIONS[t.dataset.act];if(!fn)return;
+  try{const r=fn(t,e);if(r&&r.catch)r.catch(reportErr);}catch(err){reportErr(err);}
+});
+document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(!f)return;e.preventDefault();try{const r=FORMS[f.dataset.form]&&FORMS[f.dataset.form](f);if(r&&r.catch)r.catch(err=>{busy(f,false);reportErr(err);});}catch(err){busy(f,false);reportErr(err);}});
+document.addEventListener('change',e=>{const t=e.target.closest('[data-change]');if(t&&CHANGES[t.dataset.change]){try{CHANGES[t.dataset.change](t);}catch(err){reportErr(err);}return;}
+  if(e.target.id==='filtert'){UI.filter.type=e.target.value;renderTopbar();renderMessages();}});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='input'){autoGrow(t);const cv=convo();if(cv)UI.drafts[cv.key]=t.value;}
+  else if(t.id==='chq'){UI.chq=t.value;applyChannelFilter();}
+  else if(t.id==='fq'){UI.fq=t.value;renderFriendList();}
+  else if(t.id==='filterq'){UI.filter.q=t.value;renderMessages();}
+  else if(t.id==='gsearch'){UI.gq=t.value;$('#gres').innerHTML=searchHtml();}
+  else if(t.id==='notes'){D.notes=t.value;saveSoon();}
+  else if(t.dataset.live==='username'){const h=$('#r-hint'),u=t.value.trim();if(!u){h.className='hint';h.textContent='3–20 characters: letters, numbers, underscore. No email or phone needed.';}else if(!/^[A-Za-z0-9_]{3,20}$/.test(u)){h.className='hint bad';h.textContent='Use 3–20 letters, numbers or underscores.';}else if(RESERVED.has(u.toLowerCase())||findAcct(u)){h.className='hint bad';h.textContent='Username already taken in this browser.';}else{h.className='hint ok';h.textContent='Username is available.';}}
+  else if(t.dataset.live==='password'){const p=t.value,s=$('#r-str');const sc=(p.length>=8)+(/[A-Z]/.test(p)&&/[a-z]/.test(p))+(/\d/.test(p))+(/[^A-Za-z0-9]/.test(p))+(p.length>=12);s.className='hint '+(sc>=4?'ok':sc<2?'bad':'');s.textContent=!p?'Minimum 8 characters.':`Strength: ${sc>=4?'strong':sc>=3?'okay':'weak'}`;}
+});
+document.addEventListener('keydown',e=>{
+  const t=e.target;
+  if(t.id==='input'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();sendMessage();return;}
+  if(t.id==='input'&&e.key==='ArrowUp'&&!t.value){const cv=convo();const mine=cv&&[...cv.list].reverse().find(m=>m.author===me);if(mine){e.preventDefault();startEdit(mine.id);return;}}
+  if(t.id==='input'&&e.key==='Escape'&&UI.replyTo){UI.replyTo=null;renderReplyBar();return;}
+  if(t.dataset&&t.dataset.edit){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveEdit();}else if(e.key==='Escape'){e.stopPropagation();UI.editing=null;renderMessages(true);}return;}
+  if((e.key==='Enter'||e.key===' ')&&t.matches&&t.matches('.quote[role=button]')){e.preventDefault();t.click();return;}
+  // Context-menu arrow navigation
+  if(!$('#ctx').hidden&&['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();const bs=$$('#ctx button'),i=bs.indexOf(document.activeElement);bs[(i+(e.key==='ArrowDown'?1:-1)+bs.length)%bs.length].focus();return;}
+  if(e.key==='Escape'){
+    const cr=$('#confirm-root');
+    if(!cr.hidden){cr._cancel&&cr._cancel();return;}
+    if(!$('#ctx').hidden||!$('#popover').hidden){closeTransient();return;}
+    if(modalState){closeModal();return;}
+    if(UI.leftOpen||UI.membersDrawer){closeDrawers();return;}
+    return;
+  }
+  // Focus trap inside modal
+  if(e.key==='Tab'&&(modalState||!$('#confirm-root').hidden)){
+    const root=!$('#confirm-root').hidden?$('#confirm-root'):$('#modal-root');const f=$$('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]',root).filter(x=>x.offsetParent!==null);
+    if(f.length){const first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+  }
+  if(!D||!me)return;
+  const mod=e.ctrlKey||e.metaKey;
+  if(mod&&e.key.toLowerCase()==='k'){e.preventDefault();openSearch();}
+  else if(mod&&e.key===','){e.preventDefault();openSettings();}
+  else if(e.altKey&&e.key==='m'){e.preventDefault();ACTIONS['toggle-members']();}
+  else if(e.altKey&&e.key==='b'){e.preventDefault();ACTIONS['toggle-sidebar']();}
+  else if(e.altKey&&e.key==='n'){e.preventDefault();const b=$('[data-act=notif]');b&&ACTIONS.notif(b);}
+  else if(e.altKey&&e.key==='t'){e.preventDefault();ACTIONS['cycle-theme']();}
+  else if(e.altKey&&(e.key==='ArrowUp'||e.key==='ArrowDown')&&UI.cid){e.preventDefault();const c=C(),chs=c.channels,i=chs.findIndex(x=>x.id===UI.chid);if(chs.length)openChannel(chs[(i+(e.key==='ArrowDown'?1:-1)+chs.length)%chs.length].id);}
+  else if((e.key==='?')&&!/INPUT|TEXTAREA|SELECT/.test(t.tagName)&&!modalState){e.preventDefault();shortcutsModal();}
+});
+/* Context menus: right-click, keyboard menu key, and touch long-press */
+document.addEventListener('contextmenu',e=>{if(!D||e.target.closest('input,textarea,a'))return;const it=ctxItemsFor(e.target);if(it&&it.length){e.preventDefault();showMenu(e.clientX,e.clientY,it);}});
+document.addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='touch'||!D)return;const el=e.target.closest('[data-ctx]');if(!el||e.target.closest('textarea,a'))return;
+  const x=e.clientX,y=e.clientY;clearTimeout(pressT);pressT=setTimeout(()=>{const it=ctxItemsFor(el);if(it&&it.length){suppress=true;showMenu(x,y,it);if(navigator.vibrate)navigator.vibrate(15);}},520);
+});
+['pointerup','pointermove','pointercancel','scroll'].forEach(ev=>document.addEventListener(ev,()=>clearTimeout(pressT),{passive:true,capture:true}));
+window.addEventListener('storage',e=>{
+  if(!me||!D)return;
+  if(e.key===NS+'dm'){DM=loadDM();syncDmNotifs();renderSidebar();renderRail();renderTopbar();if(convo()&&convo().kind==='dm'){markDmRead();renderMessages();}if(UI.view==='friends'&&!UI.cid)renderFriendList();}
+  if(e.key===NS+'accounts'){loadAccts();renderMembers();}
+});
+window.addEventListener('beforeunload',saveNow);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveNow();});
+window.addEventListener('resize',()=>{if(innerWidth>760&&UI.leftOpen){UI.leftOpen=false;syncDrawers();}if(innerWidth>980&&UI.membersDrawer){UI.membersDrawer=false;syncDrawers();}});
+function reportErr(err){console.error(err);toast('Something went wrong: '+(err&&err.message||err),'error',5000);}
+window.addEventListener('error',e=>{console.error(e.error||e.message);});
+window.addEventListener('unhandledrejection',e=>{console.error(e.reason);});
+
+function init(){
+  buildSprite();hydrate();loadAccts();
+  const ui=store.get('ui',null);if(isObj(ui))applyUi(mergeDefaults(DEFAULT_SETTINGS,ui));
+  setTimeout(()=>{
+    const s=store.get('session',null);
+    if(isObj(s)&&typeof s.user==='string'&&ACCTS[s.user]){me=s.user;DM=loadDM();loadUserData();showApp();}
+    else{$('#auth').hidden=false;}
+    $('#boot').classList.add('hide');setTimeout(()=>{$('#boot').hidden=true;},400);
+  },450);
+  setInterval(()=>{if(me)store.set('hb.'+me,Date.now());},15000);
+  setInterval(simActivity,45000);
+  setInterval(checkReminders,15000);
+  setInterval(shufflePresence,70000);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</body>
+  </html>
